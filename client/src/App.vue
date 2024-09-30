@@ -5,8 +5,8 @@ import { ref, onMounted } from "vue";
 const dataEmployee = ref(null)
 const getEmployees = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/');
-    console.log(res.data)
+    const res = await axios.get('http://localhost:3000/'); //get data from backend 
+    console.log(res.data) 
   } catch (error) {
     console.log(error)
   }

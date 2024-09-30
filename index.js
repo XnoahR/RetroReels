@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 
 app.get('/', async (req, res) => {
     try {
-        const employeeCollection = await mongoose.connection.db.collection('employees').find({}).toArray()
+        const employeeCollection = await mongoose.connection.db.collection('employees').find({}).toArray() //Find all document inside employees collection
         return res.json(employeeCollection);  // Return collections in JSON format
     } catch (error) {
         console.error('Error listing collections:', error);
