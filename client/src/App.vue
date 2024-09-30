@@ -1,12 +1,17 @@
 <script setup>
 import axios from "axios";
-import { ref, onMounted } from "vue";
+import { ref, onMounted,reactive } from "vue";
 
-const dataEmployee = ref(null)
+const employee = reactive([])
+const dataEmployee = ref([])
 const getEmployees = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/'); //get data from backend 
-    console.log(res.data) 
+    const { data } = await axios.get('http://localhost:3000/'); //get data from backend 
+    console.log(data) 
+    dataEmployee.value = data;
+    if (dataEmployee.value.length > 0) {
+      employee.push(...dataEmployee.value)
+    }
   } catch (error) {
     console.log(error)
   }
@@ -18,5 +23,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <h1>Hello Vue</h1>
+  <ol>
+    <li v-for="(data, index) in employee" :key="index"> {{ data.name }} and {{ data.credential.email }}</li>  
+  </ol>
 </template>
