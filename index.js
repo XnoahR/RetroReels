@@ -3,11 +3,13 @@ import 'dotenv/config'
 import mongoose from "mongoose";
 import cors from "cors";
 
+// ----- Initations -----
 const app = express()
+
+// ----- Middlewares -----
 app.use(express.json())
 app.use(cors())
 
-const port = process.env.PORT || 5000;
 
 app.get('/', async (req, res) => {
     try {
@@ -19,6 +21,8 @@ app.get('/', async (req, res) => {
     }
 })
 
+// ----- Connections -----
+const port = process.env.PORT || 5000;
 app.listen(port, ()=>{
     console.log(`Connected to the http://localhost:${port}`)
 })
