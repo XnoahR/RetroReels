@@ -3,6 +3,7 @@ import 'dotenv/config'
 import mongoose from "mongoose";
 import cors from "cors";
 import VideoTapeRouter from './src/router/VideoTapeRouter.js'
+import AuthRouter from './src/router/AuthRouter.js'
 
 
 
@@ -25,7 +26,8 @@ app.use(cors())
 // })
 
 // ----- Routes -----
-app.use('/videotape',VideoTapeRouter)
+app.use('/api/videotape',VideoTapeRouter)
+app.use('/api/user',AuthRouter)
 
 // ----- Connections -----
 const port = process.env.PORT || 5000;
