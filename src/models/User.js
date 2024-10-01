@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import validator from "validator";
+import Rental from "./Rental.js";
 
 const { Schema } = mongoose;
 const isEmail = validator.isEmail;
@@ -26,17 +27,11 @@ const userSchema = new Schema({
       required: [true, "please enter a password"],
       minLength: [8, "Minimum password length is 8 characters."],
     },
-    tapes: [
-      {
-        tapeId: { type: Schema.Types.ObjectId, ref: "VideoTape" }, // Reference to the video tape
-        borrowedDate: { type: Date, default: Date.now },
-        returnDate: { type: Date },
-        status: {
-          type: String,
-          enum: ["borrowed", "returned"],
-          default: "borrowed",
-        },
-      },
-    ],
   },
+  borrowedTapes: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Rental",
+    },
+  ],
 });
