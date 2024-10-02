@@ -26,22 +26,26 @@ const createSendToken = (user, status, res) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const createUser = await User.create({
-      name: req.body.name,
-      email: req.body.email,
-      password: req.body.password,
-    });
+  const createUser = await User.create({
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+  });
 
-    // return res.status(201).json({
-    //     message:'Register Success!',
-    //     data:createUser
-    // })
-    createSendToken(createUser, 201, res);  
+  // return res.status(201).json({
+  //     message:'Register Success!',
+  //     data:createUser
+  // })
+  createSendToken(createUser, 201, res);
 });
 
-const loginUser = (req, res) => {
-  res.send("Login User");
-};
+const loginUser = asyncHandler(async (req, res) => {
+    //validate the email and password input
+  if (!req.body.email && !req.body.password) {
+    res.status(400);
+    throw new Error("Email and Password should not be empty!");
+  }
+});
 
 const logoutUser = (req, res) => {
   res.send("Logout User");
