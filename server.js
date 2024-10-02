@@ -1,20 +1,23 @@
 import express from "express";
-import 'dotenv/config'
+import "dotenv/config";
 import mongoose from "mongoose";
 import cors from "cors";
-import VideoTapeRouter from './src/router/VideoTapeRouter.js'
-import AuthRouter from './src/router/AuthRouter.js'
-
-
+import VideoTapeRouter from "./src/router/VideoTapeRouter.js";
+import AuthRouter from "./src/router/AuthRouter.js";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
 
 // ----- Initations -----
-const app = express()
+const app = express();
 
 // ----- Middlewares -----
-app.use(express.json())
-app.use(cors())
-
-
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors());
+app.use(cookieParser());
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
 // app.get('/', async (req, res) => {
 //     try {
 //         const employeeCollection = await mongoose.connection.db.collection('employees').find({}).toArray() //Find all document inside employees collection
@@ -26,20 +29,22 @@ app.use(cors())
 // })
 
 // ----- Routes -----
-app.use('/api/videotape',VideoTapeRouter)
-app.use('/api/user',AuthRouter)
+app.use("/api/videotape", VideoTapeRouter);
+app.use("/api/user", AuthRouter);
 
 // ----- Connections -----
 const port = process.env.PORT || 5000;
-app.listen(port, ()=>{
-    console.log(`Connected to the http://localhost:${port}`)
-})
+app.listen(port, () => {
+  console.log(`Connected to the http://localhost:${port}`);
+});
 
-mongoose.connect(process.env.DATABASE, {
+mongoose
+  .connect(process.env.DATABASE, {
     autoIndex: true, // Ensure Mongoose automatically builds indexes
-  }).then(() => {
-    mongoose.connection.db.listCollections().toArray((err, names) =>{
-        console.log(names)
-    })
-    console.log('Connected to mongoDB')
+  })
+  .then(() => {
+    mongoose.connection.db.listCollections().toArray((err, names) => {
+      console.log(names);
+    });
+    console.log("Connected to mongoDB");
   });
