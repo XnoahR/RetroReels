@@ -1,4 +1,4 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
+import asyncHandler from "../middlewares/AsyncHandler.js";
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
@@ -26,10 +26,14 @@ const createSendToken = (user, status, res) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
+  const isFirstAccount = (await User.countDocuments()) === 0;
+  const role = isFirstAccount ? "admin" : "user"; 
+
   const createUser = await User.create({
     name: req.body.name,
     email: req.body.email,
     password: req.body.password,
+    role,
   });
 
   // return res.status(201).json({
@@ -40,7 +44,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    //validate the email and password input
+  //validate the email and password input
   if (!req.body.email && !req.body.password) {
     res.status(400);
     throw new Error("Email and Password should not be empty!");
@@ -48,14 +52,14 @@ const loginUser = asyncHandler(async (req, res) => {
 
   //Check the registered account
   const userData = await User.findOne({
-    email: req.body.email
-  })
+    email: req.body.email,
+  });
   //Check the password
-  if(userData && await userData.comparePassword(req.body.password)){
-    createSendToken(userData, 200, res)
-  }else{
-    res.status(400)
-    throw new Error('Email or Password is Invalid!')
+  if (userData && (await userData.comparePassword(req.body.password))) {
+    createSendToken(userData, 200, res);
+  } else {
+    res.status(400);
+    throw new Error("Email or Password is Invalid!");
   }
 });
 

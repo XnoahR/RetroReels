@@ -6,7 +6,7 @@ import VideoTapeRouter from "./src/router/VideoTapeRouter.js";
 import AuthRouter from "./src/router/AuthRouter.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-import { errorHandler, notFound } from "./src/middlewares/errorHandler.js";
+import { errorHandler, notFound } from "./src/middlewares/ErrorHandler.js";
 // ----- Initations -----
 const app = express();
 
