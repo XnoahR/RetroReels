@@ -12,6 +12,11 @@ const errorHandler = (err, req, res, next)=> {
         statusCode = 404
     }
 
+    if(err.name === 'ValidationError'){
+        msg = Object.values(err.errors)
+        .map((i) => i.message)
+        .join(',')
+    }
     res.status(statusCode).json({
         message: msg,
         stack: process.env.NODE_ENV === 'production' ? null : err.stack
