@@ -6,7 +6,7 @@ import VideoTapeRouter from "./src/router/VideoTapeRouter.js";
 import AuthRouter from "./src/router/AuthRouter.js";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
-
+import { errorHandler, notFound } from "./src/middlewares/errorHandler.js";
 // ----- Initations -----
 const app = express();
 
@@ -31,6 +31,11 @@ if (process.env.NODE_ENV === "development") {
 // ----- Routes -----
 app.use("/api/videotape", VideoTapeRouter);
 app.use("/api/user", AuthRouter);
+
+// ----- Middlewares -----
+app.use(notFound)
+app.use(errorHandler)
+
 
 // ----- Connections -----
 const port = process.env.PORT || 5000;
