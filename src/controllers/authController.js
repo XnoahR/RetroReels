@@ -45,6 +45,18 @@ const loginUser = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("Email and Password should not be empty!");
   }
+
+  //Check the registered account
+  const userData = await User.findOne({
+    email: req.body.email
+  })
+  //Check the password
+  if(userData && await userData.comparePassword(req.body.password)){
+    createSendToken(userData, 200, res)
+  }else{
+    res.status(400)
+    throw new Error('Email or Password is Invalid!')
+  }
 });
 
 const logoutUser = (req, res) => {
