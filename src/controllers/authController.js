@@ -27,7 +27,7 @@ const createSendToken = (user, status, res) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   const isFirstAccount = (await User.countDocuments()) === 0;
-  const role = isFirstAccount ? "admin" : "user"; 
+  const role = isFirstAccount ? "admin" : "user";
 
   const createUser = await User.create({
     name: req.body.name,
@@ -64,16 +64,38 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = (req, res) => {
-  res.send("Logout User");
+  res.cookie('jwt', '', {
+    expire: new Date(0),
+    httpOnly: true,
+    security: false
+  })
+
+  res.status(200).json({
+    message:'Log out Successful!'
+  })
 };
 
 const getUser = async (req, res) => {
-  const users = await User.find();
-  try {
-    res.status(200).json(users);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  const user = await User.findById(req.user.id).select({ password: 0 }); //Get User and except the passwordx
+
+  if (user) {
+    return res.status(200).json({
+      user,
+    });
   }
+
+  return res.status(400).json({
+    message: "User not found!",
+  });
 };
+
+// const getUser = async (req, res) => {
+//   const users = await User.find();
+//   try {
+//     res.status(200).json(users);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 
 export { registerUser, loginUser, logoutUser, getUser };
