@@ -1,29 +1,23 @@
 <script setup>
 import axios from "axios";
-import { ref, onMounted,reactive } from "vue";
-
-const employee = reactive([])
-const dataEmployee = ref([])
-const getEmployees = async () => {
-  try {
-    const { data } = await axios.get('http://localhost:3000/'); //get data from backend 
-    console.log(data) 
-    dataEmployee.value = data;
-    if (dataEmployee.value.length > 0) {
-      employee.push(...dataEmployee.value)
-    }
-  } catch (error) {
-    console.log(error)
-  }
-}
-
-onMounted(() => {
-  getEmployees();
-})
+import { ref, onMounted, reactive } from "vue";
+import Button from 'primevue/button';
+import Header from "./components/Header.vue";
 </script>
 
+
+
+
 <template>
-  <ol>
-    <li v-for="(data, index) in employee" :key="index"> {{ data.name }} and {{ data.credential.email }}</li>  
-  </ol>
+  <div class="card flex justify-center">
+    <Button label="Primary" text raised />
+    <Button label="Secondary" severity="secondary" text raised />
+    <Button label="Success" severity="success" text raised />
+    <Button label="Info" severity="info" text raised />
+    <Button label="Warn" severity="warn" text raised />
+    <Button label="Help" severity="help" text raised />
+    <Button label="Danger" severity="danger" text raised />
+    <Button label="Plain" plain text raised />
+  </div>
+  <Header />
 </template>
