@@ -35,4 +35,17 @@ const authMiddleware = async (req, res, next) => {
   next();
 };
 
-export default authMiddleware;
+const permissionAccess = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        res.status(403).json({
+          message: "Forbidden User",
+        })
+      );
+    }
+    next()
+  };
+};
+
+export {authMiddleware, permissionAccess};
