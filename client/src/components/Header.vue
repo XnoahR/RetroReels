@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import Menubar from 'primevue/menubar';
-import 'primeicons/primeicons.css'
+import 'primeflex/primeflex.css'
 const items = ref([
     {
         label: "Home",
