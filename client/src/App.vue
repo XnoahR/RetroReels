@@ -11,6 +11,7 @@ import ButtonVx from "./components/ButtonVx.vue";
 
 
 <template>
- <ButtonVx/>
-  <!-- <Header></Header> -->
+ <ButtonVx />
+  <Header></Header>
+  <h1 class="bg-red-500">Joe</h1>
 </template>
