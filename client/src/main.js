@@ -21,10 +21,10 @@ app.use(PrimeVue, {
     preset: Aura,
     Options: {
       darkModeSelector: false || "none",
-      cssLayer: {
-        name: "primevue",
-        order: "tailwind-base, primevue, tailwind-utilities",
-      },
+      // cssLayer: {
+      //   name: "primevue",
+      //   // order: "tailwind-base, primevue, tailwind-utilities",
+      // },
     },
   },
 });

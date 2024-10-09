@@ -13,7 +13,7 @@ const app = express();
 // ----- Middlewares -----
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
+// app.use(cors());
 app.use(cookieParser());
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
@@ -31,6 +31,11 @@ if (process.env.NODE_ENV === "development") {
 // ----- Routes -----
 app.use("/api/videotape", VideoTapeRouter);
 app.use("/api/user", AuthRouter);
+app.get('/api/test', (req,res) => {
+  res.status(200).json({
+    message: "Connected tp endpoint"
+  })
+})
 
 // ----- Middlewares -----
 app.use(notFound)

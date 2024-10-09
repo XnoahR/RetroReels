@@ -1,45 +1,7 @@
-<script setup>
-import { ref } from 'vue';
-import Menubar from 'primevue/menubar';
-
-const dialog = ref(false)
-
-const items = ref([
-    {
-        label: "Home",
-        icon: "pi pi-home"
-    },
-    {
-        label: "Projects",
-        icon: 'pi pi-search',
-        "items": [{
-            label: "Components",
-            icon: "pi pi-bold"
-        },
-        {
-            label: 'Blocks',
-            icon: 'pi pi-server'
-        }
-        ]
-    },
-    {
-        label: 'Contacts',
-        icon: 'pi pi-envelope'
-    }
-])
-</script>
-
 <template>
-    <Menubar :model="items">
-        <template #end>
-            <Button label="Login" icon="pi pi-user" @click="dialog = true" />
-        </template>
-    </Menubar>
-
-    <Dialog v-model:visible="visible" pt:root:class="!border-0 !bg-transparent" pt:mask:class="backdrop-blur-sm">
+    <Dialog pt:root:class="!border-0 !bg-transparent" pt:mask:class="backdrop-blur-sm">
         <template #container="{ closeCallback }">
-            <div class="flex flex-col px-8 py-8 gap-6 rounded-2xl"
-                style="background-image: radial-gradient(circle at left top, var(--p-primary-400), var(--p-primary-700))">
+            <div class="flex flex-col px-8 py-8 gap-6 rounded-2xl bg-emerald-300">
                 <svg width="35" height="40" viewBox="0 0 35 40" fill="none" xmlns="http://www.w3.org/2000/svg"
                     class="block mx-auto">
                     <path

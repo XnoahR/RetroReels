@@ -1,17 +1,25 @@
 <script setup>
 import axios from "axios";
 import { ref, onMounted, reactive } from "vue";
-import Button from 'primevue/button';
-import Header from "./components/Header.vue";
+import Header from "./layouts/Header.vue";
 import ButtonVx from "./components/ButtonVx.vue";
+import customFetch from "./api.js";
 
+const getData = async () => {
+  const res = await customFetch.get('/test')
+  console.log(res);
+}
+
+onMounted(() => {
+  getData()
+})
 </script>
 
 
 
 
 <template>
- <ButtonVx />
+  <ButtonVx />
   <Header></Header>
   <h1 class="bg-red-500">Joe</h1>
 </template>
