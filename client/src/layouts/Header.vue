@@ -1,40 +1,38 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router'; // Import useRouter to handle navigation
 import Menubar from 'primevue/menubar';
-import FormAuthComponent from "@/components/FormAuthComponent.vue"
-const dialog = ref(false)
+import FormAuthComponent from "@/components/FormAuthComponent.vue";
 
+const dialog = ref(false);
+const router = useRouter(); // Get router instance
+
+// Define the menu items with their paths
 const items = ref([
     {
         label: "Home",
-        icon: "pi pi-home"
+        icon: "pi pi-home",
+        command: () => {router.push('/')}
     },
     {
-        label: "Projects",
+        label: "About",
         icon: 'pi pi-search',
-        "items": [{
-            label: "Components",
-            icon: "pi pi-bold"
-        },
-        {
-            label: 'Blocks',
-            icon: 'pi pi-server'
-        }
-        ]
+        command: () => router.push('/about')
     },
     {
         label: 'Contacts',
-        icon: 'pi pi-envelope'
+        icon: 'pi pi-envelope',
+        command: () =>  router.push('/contact')
     }
-])
+]);
+
 </script>
 
 <template>
-    <Menubar :model="items">
+    <Menubar :model="items" >
         <template #end>
             <Button label="Login" icon="pi pi-user" @click="dialog = true" />
         </template>
     </Menubar>
-
-    <FormAuthComponent v-model:visible="dialog"/>
+    <FormAuthComponent v-model:visible="dialog" />
 </template>
