@@ -9,20 +9,23 @@ const router = useRouter(); // Get router instance
 
 // Define the menu items with their paths
 const items = ref([
-    {
+{
         label: "Home",
         icon: "pi pi-home",
-        command: () => {router.push('/')}
+        name: "Home",
+        command: () => router.push({ name: 'Home' })  // Use name for navigation
     },
     {
         label: "About",
         icon: 'pi pi-search',
-        command: () => router.push('/about')
+        name: "About",
+        command: () => router.push({ name: 'About' }) 
     },
     {
         label: 'Contacts',
         icon: 'pi pi-envelope',
-        command: () =>  router.push('/contact')
+        name: "Contact",
+        command: () => router.push({ name: 'Contact' })
     }
 ]);
 

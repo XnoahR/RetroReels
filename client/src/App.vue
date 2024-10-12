@@ -17,15 +17,15 @@ onMounted(() => {
 })
 </script>
 
-
-
-
 <template>
-<Header/>
+  <Header />
   <main>
     <RouterView />
-    <strong>Current route path:</strong> {{ $route.fullPath }}
-    <RouterLink :to="$route.fullPath === '/' ? '/about' : '/'">Go To {{ $route.fullPath === '/' ? 'About' : 'Home' }}
+    <br>
+    <strong class="">Current route path: " {{ $route.fullPath }} " </strong> 
+    <RouterLink :to="$route.fullPath === '/' ? '/about' : '/'"
+      class="bg-blue-500 py-2 px-3 hover:bg-blue-600 hover:text-gray-200 rounded-lg text-center">{{ $route.fullPath ===
+        '/' ? 'About' : 'Home' }}
     </RouterLink>
   </main>
 

@@ -16,6 +16,10 @@ import Row from "primevue/row"; // optional
 const app = createApp(App);
 
 app.use(router);
+router.afterEach(to => {
+  const defaultTitle = "Retro Reels";
+  document.title = to.name? `${to.name} - ${defaultTitle}` : defaultTitle;
+})
 app.use(PrimeVue, {
   theme: {
     preset: Aura,
