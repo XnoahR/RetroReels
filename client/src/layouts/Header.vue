@@ -78,19 +78,19 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
     <div 
       v-if="isOpen && isMobileScreen"
       id="SecondMenuBar" 
-      class="w-full absolute bg-serenade-100 border-b border-black overflow-hidden"
+      class="w-full absolute bg-white border-b border-black overflow-hidden"
     >
       <ul class="flex max-sm:h-full max-sm:flex-col justify-evenly items-center py-6">
         <li
           v-for="(item, index) in items"
           :key="index"
           @click="item.command"
-          class="hover:cursor-pointer font-semibold mx-6 max-sm:hover:bg-gray-300 max-sm:w-5/6 rounded-md max-sm:text-center max-sm:mb-3 max-sm:py-1"
+          class="hover:cursor-pointer font-semibold mx-6 max-sm:hover:bg-gray-300 max-sm:w-4/6 rounded-md max-sm:text-center max-sm:mb-3 max-sm:py-1"
         >
           {{ item.label }}
         </li>
         <li
-          class="mx-6 bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none"
+          class=" max-sm:w-4/6 text-center bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none"
           @click="dialog.value = true"
         >
           Login
@@ -111,11 +111,11 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
 
 .dropdown-enter-from, .dropdown-leave-to {
   max-height: 0;
-  opacity: 0;
+
 }
 
 .dropdown-enter-to, .dropdown-leave-from {
-  max-height: 256px;
-  opacity: 1;
+  max-height: 16rem;
+
 }
 </style>
