@@ -34,6 +34,10 @@ const items = ref([
         command: () => router.push({ name: 'Contact' })
     }
 ]);
+const isMobileScreen = ref(window.innerWidth < 640);
+window.addEventListener('resize', () => {
+    isMobileScreen.value = window.innerWidth < 640;
+});
 
 const isOpen = ref(false);
 const toggleMenu = () => { isOpen.value = !isOpen.value };
@@ -47,18 +51,71 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
         </template>
 </Menubar>
 <FormAuthComponent v-model:visible="dialog" /> -->
-    <nav class="flex justify-between py-3  bg-serenade-100 border-b border-b-black">
-        <img src="../../public/RR.png" alt="" class="w-8 h-6 ms-3">
-        <div id="MenuBar" class="w-1/3 me-10" :class="{ 'hidden': !isOpen, 'w-1/3': true }">
-            <ul class="flex justify-center space-x-10">
+    <nav class="flex justify-between py-6 pe-6 bg-serenade-100 border-b border-b-black">
+        <img src="/RR.png" alt="" class="w-8 h-6 ms-3">
+        <div id="MenuBar" class="w-1/3  me-24 max-sm:hidden">
+            <ul class="flex max-sm:flex-col justify-center items-center">
                 <li v-for="(item, index) in items" @click="item.command" key="index"
-                    class="hover:cursor-pointer font-semibold border-black max-sm:hidden">{{ item.label }}</li>
+                    class="hover:cursor-pointer font-semibold border-black mx-6">{{ item.label }}
+                </li>
+                <li
+                    class="mx-6 bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none">
+                    Login</li>
             </ul>
         </div>
-        <button @click="toggleMenu" class="sm:hidden flex flex-col justify-center space-y-1 focus:outline-none me-2">
+        <button @click="toggleMenu" class="sm:hidden flex flex-col justify-center space-y-1 focus:outline-none">
             <span class="block w-6 h-0.5 bg-black"></span>
             <span class="block w-6 h-0.5 bg-black"></span>
             <span class="block w-6 h-0.5 bg-black"></span>
         </button>
     </nav>
+    <transition
+    name="dropdown"
+    @before-enter="beforeEnter"
+    @enter="enter"
+    @leave="leave"
+  >
+    <div 
+      v-if="isOpen && isMobileScreen"
+      id="SecondMenuBar" 
+      class="w-full absolute bg-serenade-100 border-b border-black overflow-hidden"
+    >
+      <ul class="flex max-sm:h-full max-sm:flex-col justify-evenly items-center py-6">
+        <li
+          v-for="(item, index) in items"
+          :key="index"
+          @click="item.command"
+          class="hover:cursor-pointer font-semibold mx-6 max-sm:hover:bg-gray-300 max-sm:w-5/6 rounded-md max-sm:text-center max-sm:mb-3 max-sm:py-1"
+        >
+          {{ item.label }}
+        </li>
+        <li
+          class="mx-6 bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none"
+          @click="dialog.value = true"
+        >
+          Login
+        </li>
+      </ul>
+    </div>
+  </transition>
+
+  <!-- Login Dialog Component -->
+  <FormAuthComponent v-model:visible="dialog.value" />
 </template>
+
+<!-- Add transition styles -->
+<style scoped>
+.dropdown-enter-active, .dropdown-leave-active {
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.dropdown-enter-from, .dropdown-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.dropdown-enter-to, .dropdown-leave-from {
+  max-height: 256px;
+  opacity: 1;
+}
+</style>
