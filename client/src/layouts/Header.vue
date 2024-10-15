@@ -34,6 +34,11 @@ const items = ref([
         command: () => router.push({ name: 'Contact' })
     }
 ]);
+
+const GoToLogin = () => {
+  router.push({'name' : 'Login'})
+}
+
 const isMobileScreen = ref(window.innerWidth < 640);
 window.addEventListener('resize', () => {
     isMobileScreen.value = window.innerWidth < 640;
@@ -45,12 +50,6 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
 </script>
 
 <template>
-    <!-- <Menubar class="bg-blue-300" :model="items" >
-        <template #end>
-            <Button label="Login" icon="pi pi-user" @click="dialog = true" />
-        </template>
-</Menubar>
-<FormAuthComponent v-model:visible="dialog" /> -->
     <nav class="flex justify-between py-6 pe-6 bg-serenade-100 border-b border-b-black">
         <img src="/RR.png" alt="" class="w-8 h-6 ms-3">
         <div id="MenuBar" class="w-1/3  me-24 max-sm:hidden">
@@ -59,7 +58,8 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
                     class="hover:cursor-pointer font-semibold border-black mx-6">{{ item.label }}
                 </li>
                 <li
-                    class="mx-6 bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none">
+                    @click="GoToLogin"
+                    class="mx-6 bg-bay-leaf-300 hover:cursor-pointer hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none">
                     Login</li>
             </ul>
         </div>
@@ -91,19 +91,15 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
         </li>
         <li
           class=" max-sm:w-4/6 text-center bg-bay-leaf-300 hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none"
-          @click="dialog.value = true"
+          @click="GoToLogin"
         >
           Login
         </li>
       </ul>
     </div>
   </transition>
-
-  <!-- Login Dialog Component -->
-  <FormAuthComponent v-model:visible="dialog.value" />
 </template>
 
-<!-- Add transition styles -->
 <style scoped>
 .dropdown-enter-active, .dropdown-leave-active {
   transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
