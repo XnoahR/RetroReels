@@ -4,6 +4,10 @@ export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      width: {
+        '1.5-screen': "150vw"
+      }
+      ,
       colors: {
         serenade: {
           50: "#fef7ee",
@@ -31,6 +35,20 @@ export default {
           900: "#293830",
           950: "#141f19",
         },
+        'shark': {
+        '50': '#f4f6f7',
+        '100': '#e3e7ea',
+        '200': '#cad3d7',
+        '300': '#a5b2bb',
+        '400': '#798b97',
+        '500': '#5e707c',
+        '600': '#515f69',
+        '700': '#454f59',
+        '800': '#3e454c',
+        '900': '#373c42',
+        '950': '#2a2f35',
+    },
+    
       },
     },
   },
