@@ -23,9 +23,8 @@ onMounted(() => {
   <Header v-if="route.fullPath !== '/login'" />
   <main>
     <RouterView />
-    <br>
-    <strong class="">Current route path: " {{ $route.fullPath }} " </strong> 
-    <RouterLink :to="$route.fullPath === '/' ? '/about' : '/'"
+    <strong v-if="route.fullPath !== '/login'" class="">Current route path: " {{ $route.fullPath }} " </strong> 
+    <RouterLink v-if="route.fullPath !== '/login'" :to="$route.fullPath === '/' ? '/about' : '/'"
       class="bg-blue-500 py-2 px-3 hover:bg-blue-600 hover:text-gray-200 rounded-lg text-center">{{ $route.fullPath ===
         '/' ? 'About' : 'Home' }}
     </RouterLink>
