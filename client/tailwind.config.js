@@ -5,7 +5,11 @@ export default {
   theme: {
     extend: {
       width: {
-        '1.5-screen': "150vw"
+        '1.5-screen': "150vw",
+        'disc' : '42rem'
+      },
+      height:{
+        'disc' : '42rem'
       }
       ,
       colors: {

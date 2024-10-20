@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import DiscTape from '../components/DiscTape.vue';
+import VynylCassete from '../components/VynylCassete.vue';
 </script>
 
 <template>
     <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 -z-50 overflow-hidden relative">
+            <vynyl-cassete/>
         <span
             class="absolute w-auto h-auto font-bold text-center border border-white bottom-64 right-32 text-4xl text-white">
             VHS </span><span
