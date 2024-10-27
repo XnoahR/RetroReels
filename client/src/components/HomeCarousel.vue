@@ -12,14 +12,14 @@
         }"
         :navigation="true"
         :modules="[Autoplay, Pagination, Navigation]" 
-        class="w-screen overflow-x-hidden h-80 -z-20">
+        class="w-screen overflow-x-hidden h-96 -z-20">
         <swiper-slide 
           v-for="(pict, index) in pictures" 
           :key="index" 
           class="w-full h-full">
           <img 
             :src="`/${pict}`" 
-            class="w-full h-full border border-red-500 object-cover object-center" 
+            class="w-full h-full object-cover object-center" 
             alt="" 
           />
         </swiper-slide>
@@ -36,6 +36,6 @@
   import 'swiper/css/navigation';
   import 'swiper/css/autoplay';
   
-  const pictures = ['ht.png', 'Yoru.jpeg', 'RR.png'];
+  const pictures = ['wallpaper-1.png', 'wallpaper-2.png', 'wallpaper-3.png'];
   </script>
   
