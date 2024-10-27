@@ -53,7 +53,7 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
     <nav class="flex justify-between py-6 pe-6 bg-serenade-100 border-b border-b-black">
         <img src="/RR.png" alt="" class="w-8 h-6 ms-3">
         <div id="MenuBar" class="w-1/3  me-24 max-sm:hidden">
-            <ul class="flex max-sm:flex-col justify-center items-center">
+            <ul class="flex max-sm:flex-col justify-center items-center ">
                 <li v-for="(item, index) in items" @click="item.command" key="index"
                     class="hover:cursor-pointer font-semibold border-black mx-6">{{ item.label }}
                 </li>
@@ -78,7 +78,7 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
     <div 
       v-if="isOpen && isMobileScreen"
       id="SecondMenuBar" 
-      class="w-full absolute bg-white border-b border-black overflow-hidden"
+      class="w-full absolute bg-white z-50 border-b border-black overflow-hidden"
     >
       <ul class="flex max-sm:h-full max-sm:flex-col justify-evenly items-center py-6">
         <li

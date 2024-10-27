@@ -4,7 +4,7 @@
                 <div class="border border-gray-800 rounded-full w-5/6 h-5/6 flex items-center justify-center">
                     <div class="border border-gray-800 rounded-full w-5/6 h-5/6 flex items-center justify-center">
                         <div
-                            class="bg-[url(../../public/Yoru.jpeg)] bg-center border border-gray-800 rounded-full w-4/6 h-4/6 flex items-center justify-center">
+                            class="bg-[url(../../public/Yoru.jpeg)] bg-center border border-white rounded-full w-4/6 h-4/6 flex items-center justify-center">
                             <span class=" w-5 h-5 bg-white border-2 border-black rounded-full"> </span>
                         </div>
                     </div>

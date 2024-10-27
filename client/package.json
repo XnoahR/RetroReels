@@ -8,13 +8,14 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
-  "format": "prettier .  --write"
+    "format": "prettier .  --write"
   },
   "dependencies": {
     "@primevue/themes": "^4.0.7",
     "axios": "^1.7.7",
     "primeicons": "^7.0.0",
     "primevue": "^4.0.7",
+    "swiper": "^11.1.14",
     "tailwindcss-primeui": "^0.3.4",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3"
