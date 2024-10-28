@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup >
 import DiscTape from '../components/DiscTape.vue';
 import VynylCassete from '../components/VynylCassete.vue';
 </script>

@@ -21,7 +21,7 @@ onMounted(() => {
 
 <template>
   <Header v-if="route.fullPath !== '/login'" />
-  <main>
+  <main class="" :class="route.fullPath !== '/login' ? 'bg-gray-900' : ''">
     <RouterView />
     <strong v-if="route.fullPath !== '/login'" class="">Current route path: " {{ $route.fullPath }} " </strong> 
     <RouterLink v-if="route.fullPath !== '/login'" :to="$route.fullPath === '/' ? '/about' : '/'"

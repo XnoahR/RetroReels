@@ -3,7 +3,7 @@
 
 
         <aside
-            class="sticky top-0 flex flex-col  h-screen w-1/4 px-5 py-8 overflow-y-auto bg-white border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
+            class="sticky top-0 flex flex-col  h-screen w-1/4 px-5 py-8 overflow-y-auto bg-gray-900 border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
             <a href="#">
                 <img class="w-auto h-7" src="https://merakiui.com/images/logo.svg" alt="">
             </a>
@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import CatalogCard from './CatalogCard.vue';
-import DiscTape from './DiscTape.vue';
+import CatalogCard from '../components/CatalogCard.vue';
+import DiscTape from '../components/DiscTape.vue';
 
 </script>

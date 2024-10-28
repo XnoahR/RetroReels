@@ -1,14 +1,14 @@
 <template>
     <div id="catalog-card"
-                class="w-72 h-96 border border-red-500 flex flex-col justify-center items-center relative overflow-hidden">
+                class="w-72 h-96  rounded-xl flex flex-col justify-center items-center relative overflow-hidden">
                 <!-- Top Section (Disc Container) -->
-                <div class="w-full h-2/3 border border-red-500 bg-gray-500 relative overflow-hidden">
+                <div class="w-full h-3/4  bg-gray-500 relative overflow-hidden rounded-t-xl">
                     <DiscTape  :image="'/Yoru.jpeg'"
-                        class="absolute inset-0 top-5 -left-5" />
+                        class="absolute inset-0 top-10 -left-4" />
                 </div>
 
                 <!-- Bottom Section (Text) -->
-                <div class="w-full h-1/3 border border-blue-600">
+                <div class="w-full h-1/4  bg-gray-800 rounded-b-xl">
                     <p class="text-center text-xl font-bold">Yoru</p>
                 </div>
             </div>
