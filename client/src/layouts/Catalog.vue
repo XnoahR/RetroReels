@@ -105,7 +105,7 @@
                     </a>
                 </nav>
 
-                <div class="mt-6">
+                <!-- <div class="mt-6">
                     <div class="p-3 bg-gray-100 rounded-lg dark:bg-gray-800">
                         <h2 class="text-sm font-medium text-gray-800 dark:text-white">New feature availabel!</h2>
 
@@ -135,7 +135,7 @@
                             </svg>
                         </a>
                     </div>
-                </div>
+                </div> -->
             </div>
         </aside>
 
