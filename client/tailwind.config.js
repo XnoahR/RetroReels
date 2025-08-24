@@ -4,6 +4,9 @@ export default {
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontSize:{
+        tiny : '0.625rem'
+      },
       width: {
         '1.5-screen': "150vw",
         'disc' : '42rem'
@@ -56,5 +59,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-primeui")],
+  plugins: []
 };

@@ -1,11 +1,14 @@
-<script setup >
+<script setup>
+import { onMounted, ref } from 'vue';
 import DiscTape from '../components/DiscTape.vue';
 import VynylCassete from '../components/VynylCassete.vue';
+
 </script>
 
 <template>
     <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 -z-50 overflow-hidden relative">
-            <vynyl-cassete/>
+        <vynyl-cassete />
+        <div class="vhs-blocker">
         <span
             class="absolute w-auto h-auto font-bold text-center border border-white bottom-64 right-32 text-4xl text-white">
             VHS </span><span
@@ -13,6 +16,7 @@ import VynylCassete from '../components/VynylCassete.vue';
             class="absolute bg-green-500 w-1.5-screen bottom-24 h-8 -left-6 -rotate-12 block"></span><span
             class="absolute bg-yellow-500 w-1.5-screen bottom-16 h-8 -left-6 -rotate-12 block"></span><span
             class="absolute bg-red-500 w-1.5-screen bottom-8 h-8 -left-6 -rotate-12 block"></span>
+            </div>
         <<div
             class="flex w-full z-10  max-w-sm mx-auto overflow-hidden border-2 border-black bg-white rounded-lg shadow-lg dark:bg-gray-800 lg:max-w-4xl">
             <div class="hidden bg-slate-700 lg:flex lg:w-1/2  justify-center items-center">
@@ -101,3 +105,28 @@ import VynylCassete from '../components/VynylCassete.vue';
             </div>
     </section>
 </template>
+
+<style scoped>
+.vhs-blocker::before {
+  content: "";                /* WAJIB ada */
+  background: #2a2f35;        /* warna penutup */
+  position: absolute;
+  right: -50px;
+  bottom: -200px;
+  rotate: 170deg;
+  width: 100%;                /* full cover */
+  height: 40%;               /* full cover */
+  z-index: 10;  
+  animation: slide-up 1s ease-in forwards;
+}
+
+/* Animasi naik */
+@keyframes slide-up {
+  0% {
+    transform: translateX(-50vh);    /* posisi awal */
+  }
+  100% {
+    transform: translateX(-175vh); /* geser ke atas sampai hilang dari screen */
+  }
+}
+</style>

@@ -50,7 +50,7 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
 </script>
 
 <template>
-    <nav class="flex justify-between py-6 pe-6 bg-gray-500 border-b border-b-black">
+    <nav class="flex justify-between py-6 pe-6 bg-[#5C4033] border-b border-b-black">
         <img src="/RR.png" alt="" class="w-8 h-6 ms-3">
         <div id="MenuBar" class="w-1/3  me-24 max-sm:hidden">
             <ul class="flex max-sm:flex-col justify-center items-center ">

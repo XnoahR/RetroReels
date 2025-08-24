@@ -1,33 +1,47 @@
 <script setup>
 import axios from "axios";
-import { ref, onMounted, reactive } from "vue";
+import { ref, onMounted, reactive, watch } from "vue";
 import { RouterView, useRoute } from 'vue-router'
 import Header from "./layouts/Header.vue";
 import ButtonVx from "./components/ButtonVx.vue";
 import customFetch from "./api.js";
 
 const route = useRoute()
+const disableHeader = ref(false)
 
 const getData = async () => {
   const res = await customFetch.get('/test')
   console.log(res);
 }
 
+const toggleHeader = () =>{
+  if (route.fullPath === '/login' || route.fullPath === '/') {
+    disableHeader.value = true
+  } else {
+    disableHeader.value = false
+  }
+}
 
 onMounted(() => {
   getData()
+  toggleHeader()
 })
+
+// jalankan lagi setiap route berubah
+watch(
+  () => route.fullPath,
+  () => {
+    toggleHeader()
+  }
+)
+
 </script>
 
 <template>
-  <Header v-if="route.fullPath !== '/login'" />
-  <main class="" :class="route.fullPath !== '/login' ? 'bg-gray-900' : ''">
+  <Header v-if="!disableHeader" />
+  <main class="" :class="route.fullPath !== '/login' ? '' : ''">
     <RouterView />
-    <strong v-if="route.fullPath !== '/login'" class="">Current route path: " {{ $route.fullPath }} " </strong> 
-    <RouterLink v-if="route.fullPath !== '/login'" :to="$route.fullPath === '/' ? '/about' : '/'"
-      class="bg-blue-500 py-2 px-3 hover:bg-blue-600 hover:text-gray-200 rounded-lg text-center">{{ $route.fullPath ===
-        '/' ? 'About' : 'Home' }}
-    </RouterLink>
+    <strong v-if="!disableHeader" class="">Current route path: " {{ $route.fullPath }} " </strong> 
+    
   </main>
-
 </template>

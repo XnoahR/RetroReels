@@ -8,7 +8,7 @@
                 </div>
 
                 <!-- Bottom Section (Text) -->
-                <div class="w-full h-1/4  bg-gray-800 rounded-b-xl">
+                <div class="w-full h-1/4  bg-[#E5D5B6] rounded-b-xl">
                     <p class="text-center text-xl font-bold">Yoru</p>
                 </div>
             </div>

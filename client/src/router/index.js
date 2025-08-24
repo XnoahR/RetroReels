@@ -4,14 +4,15 @@ import AboutView from '@/views/AboutView.vue';
 import ContactView from '@/views/ContactView.vue';
 import CategoryView from '@/views/CategoryView.vue';
 import LoginView from '@/views/LoginView.vue';
+import LandingPageView from '@/views/LandingPageView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      name: 'Home',
-      component: HomeView,
+      name: 'Landing Page',
+      component: LandingPageView,
     },
     {
       path: '/about',
