@@ -3,8 +3,30 @@ import { onMounted, reactive, ref } from 'vue';
 import DiscTape from '../components/DiscTape.vue';
 import VynylCassete from '../components/VynylCassete.vue';
 import LoginAudioPlayer from '@/components/LoginAudioPlayer.vue';
+import { Store } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
 
-const currentSong = ref(0)
+const router = useRouter()
+
+const currentSong = ref(0);
+const showRegister = ref(false);
+const isTransitioning = ref(false);
+
+const casseteRef = ref(null)
+const showOverlay = ref(false)
+const playerRef = ref(null)
+
+const GoToHome = () => {
+    if (casseteRef.value && playerRef.value) {
+        showOverlay.value = true
+        casseteRef.value.triggerExit()
+        playerRef.value.fadeOut(2500)   // 🎶 fade audio 2 detik
+        setTimeout(() => {
+            router.push({ name: 'Home' })
+        }, 3000)
+    }
+}
+
 const nextSong = () => {
     currentSong.value = (currentSong.value + 1) % songList.length;
 }
@@ -12,8 +34,28 @@ const previousSong = () => {
     currentSong.value = currentSong.value === 0 ? songList.length - 1 : currentSong.value - 1;
 }
 
+const switchToRegister = (e) => {
+    e.preventDefault();
+    showRegister.value = true;
+}
+
+const switchToLogin = (e) => {
+    e.preventDefault();
+    showRegister.value = false;
+}
 
 const songList = reactive([
+    {
+        title: "モエチャッカファイア",
+        titleBackgroundColor: "bg-red-500",
+        artist: "エレン・ジョー",
+        baseColor: "bg-black",
+        borderColor: "border-white",
+        discColor: "bg-red-500",
+        sideColor: "bg-gray-500",
+        image: "/ejm3.jpg",
+        music: "/music/【ゼンゼロ】モエチャッカファイア   エレン・ジョー（CV：若山詩音）cover - 128.mp3"
+    },
     {
         title: "Put Your Head on My Shoulder",
         titleBackgroundColor: "bg-red-500",
@@ -61,9 +103,14 @@ const songList = reactive([
 ])
 </script>
 
+
 <template>
+    <button @click="GoToHome" class="absolute z-30 top-2 right-2 retro-button px-6 py-3 flex items-center space-x-2">
+        <Store class="w-6 h-6" />
+        <span>Shop</span>
+    </button>
     <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 overflow-hidden relative">
-        <vynyl-cassete :image="songList[currentSong].image" />
+        <VynylCassete ref="casseteRef" :image="songList[currentSong].image" />
         <div class="vhs-blocker">
             <span
                 class="absolute w-auto h-auto font-bold text-center border border-white bottom-64 right-32 text-4xl text-white">
@@ -79,91 +126,203 @@ const songList = reactive([
                     :titleBackgroundColor="songList[currentSong].titleBackgroundColor"
                     :borderColor="songList[currentSong].borderColor" :discColor="songList[currentSong].discColor"
                     :image="songList[currentSong].image" :sideColor="songList[currentSong].sideColor" />
-                <LoginAudioPlayer :src="songList[currentSong].music"
+                <LoginAudioPlayer :src="songList[currentSong].music" ref="playerRef"
                     :title="songList[currentSong].artist + ' - ' + songList[currentSong].title" @next="nextSong"
                     @previous="previousSong" />
             </div>
 
-            <div class="w-full px-8 py-8 lg:w-1/2">
+            <div class="w-full px-8 py-8 lg:w-1/2 relative overflow-hidden">
                 <!-- Logo -->
                 <div class="flex justify-center mx-auto mb-6">
-                    <div class="retro-text text-3xl logo-glow terminal-flicker">RR</div>
+                    <div class="retro-text text-3xl logo-glow terminal-flicker">RETRO REELS</div>
                 </div>
 
-                <!-- Welcome Text -->
-                <div class="text-center mb-6">
-                    <div class="retro-text text-xl mb-2">ACCESS TERMINAL</div>
-                    <p class="text-gray-400 text-sm uppercase tracking-wide">
-                        Enter credentials to continue
-                    </p>
-                </div>
-
-                <!-- Google Sign In -->
-                <button
-                    class="retro-secondary-button flex items-center justify-center w-full mt-4 rounded-lg py-3 px-4 transition-all duration-300">
-                    <div class="mr-3">
-                        <svg class="w-5 h-5" viewBox="0 0 40 40">
-                            <path
-                                d="M36.3425 16.7358H35V16.6667H20V23.3333H29.4192C28.045 27.2142 24.3525 30 20 30C14.4775 30 10 25.5225 10 20C10 14.4775 14.4775 9.99999 20 9.99999C22.5492 9.99999 24.8683 10.9617 26.6342 12.5325L31.3483 7.81833C28.3717 5.04416 24.39 3.33333 20 3.33333C10.7958 3.33333 3.33335 10.7958 3.33335 20C3.33335 29.2042 10.7958 36.6667 20 36.6667C29.2042 36.6667 36.6667 29.2042 36.6667 20C36.6667 18.8825 36.5517 17.7917 36.3425 16.7358Z"
-                                fill="#FFC107" />
-                            <path
-                                d="M5.25497 12.2425L10.7308 16.2583C12.2125 12.59 15.8008 9.99999 20 9.99999C22.5491 9.99999 24.8683 10.9617 26.6341 12.5325L31.3483 7.81833C28.3716 5.04416 24.39 3.33333 20 3.33333C13.5983 3.33333 8.04663 6.94749 5.25497 12.2425Z"
-                                fill="#FF3D00" />
-                            <path
-                                d="M20 36.6667C24.305 36.6667 28.2167 35.0192 31.1742 32.34L26.0159 27.975C24.3425 29.2425 22.2625 30 20 30C15.665 30 11.9842 27.2359 10.5975 23.3784L5.16254 27.5659C7.92087 32.9634 13.5225 36.6667 20 36.6667Z"
-                                fill="#4CAF50" />
-                            <path
-                                d="M36.3425 16.7358H35V16.6667H20V23.3333H29.4192C28.7592 25.1975 27.56 26.805 26.0133 27.9758C26.0142 27.975 26.015 27.975 26.0158 27.9742L31.1742 32.3392C30.8092 32.6708 36.6667 28.3333 36.6667 20C36.6667 18.8825 36.5517 17.7917 36.3425 16.7358Z"
-                                fill="#1976D2" />
-                        </svg>
+                <!-- Login Form (Always Present) -->
+                <div>
+                    <!-- Welcome Text -->
+                    <div class="text-center mb-6">
+                        <div class="retro-text text-xl mb-2">ACCESS TERMINAL</div>
+                        <p class="text-gray-400 text-sm uppercase tracking-wide">
+                            Enter credentials to continue
+                        </p>
                     </div>
-                    <span class="font-bold text-sm uppercase tracking-wider">Google Auth</span>
-                </button>
 
-                <!-- Divider -->
-                <div class="flex items-center justify-between mt-6">
-                    <span class="w-1/5 border-b retro-divider"></span>
-                    <span class="retro-link text-center">Manual Login</span>
-                    <span class="w-1/5 border-b retro-divider"></span>
-                </div>
-
-                <!-- Email Input -->
-                <div class="mt-6">
-                    <label class="retro-label block mb-3" for="LoggingEmailAddress">User ID</label>
-                    <input id="LoggingEmailAddress" class="retro-input block w-full px-4 py-3 rounded-lg" type="email"
-                        placeholder="user@terminal.sys" />
-                </div>
-
-                <!-- Password Input -->
-                <div class="mt-6">
-                    <div class="flex justify-between mb-3">
-                        <label class="retro-label" for="loggingPassword">Access Key</label>
-                        <a href="#" class="retro-link">Reset Key?</a>
-                    </div>
-                    <input id="loggingPassword" class="retro-input block w-full px-4 py-3 rounded-lg" type="password"
-                        placeholder="••••••••" />
-                </div>
-
-                <!-- Sign In Button -->
-                <div class="mt-8">
-                    <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
-                        Initialize Session
+                    <!-- Google Sign In -->
+                    <button
+                        class="retro-secondary-button flex items-center justify-center w-full mt-4 rounded-lg py-3 px-4 transition-all duration-300">
+                        <div class="mr-3">
+                            <svg class="w-5 h-5" viewBox="0 0 40 40">
+                                <path
+                                    d="M36.3425 16.7358H35V16.6667H20V23.3333H29.4192C28.045 27.2142 24.3525 30 20 30C14.4775 30 10 25.5225 10 20C10 14.4775 14.4775 9.99999 20 9.99999C22.5492 9.99999 24.8683 10.9617 26.6342 12.5325L31.3483 7.81833C28.3717 5.04416 24.39 3.33333 20 3.33333C10.7958 3.33333 3.33335 10.7958 3.33335 20C3.33335 29.2042 10.7958 36.6667 20 36.6667C29.2042 36.6667 36.6667 29.2042 36.6667 20C36.6667 18.8825 36.5517 17.7917 36.3425 16.7358Z"
+                                    fill="#FFC107" />
+                                <path
+                                    d="M5.25497 12.2425L10.7308 16.2583C12.2125 12.59 15.8008 9.99999 20 9.99999C22.5491 9.99999 24.8683 10.9617 26.6341 12.5325L31.3483 7.81833C28.3716 5.04416 24.39 3.33333 20 3.33333C13.5983 3.33333 8.04663 6.94749 5.25497 12.2425Z"
+                                    fill="#FF3D00" />
+                                <path
+                                    d="M20 36.6667C24.305 36.6667 28.2167 35.0192 31.1742 32.34L26.0159 27.975C24.3425 29.2425 22.2625 30 20 30C15.665 30 11.9842 27.2359 10.5975 23.3784L5.16254 27.5659C7.92087 32.9634 13.5225 36.6667 20 36.6667Z"
+                                    fill="#4CAF50" />
+                                <path
+                                    d="M36.3425 16.7358H35V16.6667H20V23.3333H29.4192C28.7592 25.1975 27.56 26.805 26.0133 27.9758C26.0142 27.975 26.015 27.975 26.0158 27.9742L31.1742 32.3392C30.8092 32.6708 36.6667 28.3333 36.6667 20C36.6667 18.8825 36.5517 17.7917 36.3425 16.7358Z"
+                                    fill="#1976D2" />
+                            </svg>
+                        </div>
+                        <span class="font-bold text-sm uppercase tracking-wider">Google Auth</span>
                     </button>
+
+                    <!-- Divider -->
+                    <div class="flex items-center justify-between mt-6">
+                        <span class="w-1/5 border-b retro-divider"></span>
+                        <span class="retro-link text-center">Manual Login</span>
+                        <span class="w-1/5 border-b retro-divider"></span>
+                    </div>
+
+                    <!-- Email Input -->
+                    <div class="mt-6">
+                        <label class="retro-label block mb-3" for="LoggingEmailAddress">User ID</label>
+                        <input id="LoggingEmailAddress" class="retro-input block w-full px-4 py-3 rounded-lg"
+                            type="email" placeholder="user@terminal.sys" />
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mt-6">
+                        <div class="flex justify-between mb-3">
+                            <label class="retro-label" for="loggingPassword">Access Key</label>
+                            <a href="#" class="retro-link">Reset Key?</a>
+                        </div>
+                        <input id="loggingPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                            type="password" placeholder="••••••••" />
+                    </div>
+
+                    <!-- Sign In Button -->
+                    <div class="mt-8">
+                        <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
+                            Initialize Session
+                        </button>
+                    </div>
+
+                    <!-- Sign Up Link -->
+                    <div class="flex items-center justify-between mt-6">
+                        <span class="w-1/5 border-b retro-divider"></span>
+                        <a href="#" @click="switchToRegister" class="retro-link text-center">Create Account</a>
+                        <span class="w-1/5 border-b retro-divider"></span>
+                    </div>
                 </div>
 
-                <!-- Sign Up Link -->
-                <div class="flex items-center justify-between mt-6">
-                    <span class="w-1/5 border-b retro-divider"></span>
-                    <a href="#" class="retro-link text-center">Create Account</a>
-                    <span class="w-1/5 border-b retro-divider"></span>
+                <!-- Register Form Overlay (Slides Down) -->
+                <div class="register-overlay" :class="{ 'slide-down': showRegister, 'slide-up': !showRegister }">
+                    <!-- Logo -->
+                    <div class="flex justify-center mx-auto mb-6">
+                        <div class="retro-text text-3xl logo-glow terminal-flicker">RETRO REELS</div>
+                    </div>
+
+                    <!-- Welcome Text -->
+                    <div class="text-center mb-6">
+                        <div class="retro-text text-xl mb-2">NEW USER REGISTRATION</div>
+                        <p class="text-gray-400 text-sm uppercase tracking-wide">
+                            Create your access credentials
+                        </p>
+                    </div>
+
+
+                    <!-- Email Input -->
+                    <div class="mt-6">
+                        <label class="retro-label block mb-3" for="registerEmail">User ID</label>
+                        <input id="registerEmail" class="retro-input block w-full px-4 py-3 rounded-lg" type="email"
+                            placeholder="user@terminal.sys" />
+                    </div>
+
+                    <!-- Password Input -->
+                    <div class="mt-6">
+                        <label class="retro-label block mb-3" for="registerPassword">Access Key</label>
+                        <input id="registerPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                            type="password" placeholder="••••••••" />
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="mt-6">
+                        <label class="retro-label block mb-3" for="confirmPassword">Confirm Key</label>
+                        <input id="confirmPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                            type="password" placeholder="••••••••" />
+                    </div>
+
+                    <!-- Register Button -->
+                    <div class="mt-8">
+                        <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
+                            Create Account
+                        </button>
+                    </div>
+
+                    <!-- Back to Login Link -->
+                    <div class="flex items-center justify-between mt-6">
+                        <span class="w-1/5 border-b retro-divider"></span>
+                        <a href="#" @click="switchToLogin" class="retro-link text-center">Back to Login</a>
+                        <span class="w-1/5 border-b retro-divider"></span>
+                    </div>
                 </div>
             </div>
         </div>
+        <transition name="fade">
+            <div v-if="showOverlay" class="absolute inset-0 bg-shark-950 z-40"></div>
+        </transition>
     </section>
 </template>
 
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+/* Register Form Overlay - Steel Door Animation */
+.register-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 2rem;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    transform: translateY(-100%);
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    z-index: 20;
+    box-shadow:
+        inset 0 -3px 0 rgba(255, 255, 255, 0.1),
+        inset 0 3px 0 rgba(0, 0, 0, 0.3),
+        0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.register-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    border-top: 4px solid #2d3136;
+    border-bottom: 4px solid #1a202c;
+    pointer-events: none;
+}
+
+.register-overlay::after {
+    content: 'SECURITY ACCESS';
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: rgba(226, 232, 240, 0.3);
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+}
+
+.slide-down {
+    transform: translateY(0);
+}
+
+.slide-up {
+    transform: translateY(-100%);
+}
 
 /* Retro Container */
 .retro-container {
@@ -209,6 +368,7 @@ const songList = reactive([
     letter-spacing: 0.5px;
     transition: all 0.2s ease;
     font-family: 'Courier Prime', 'Courier New', monospace;
+    cursor: pointer;
 }
 
 .retro-link:hover {
@@ -338,5 +498,34 @@ const songList = reactive([
     100% {
         opacity: 1;
     }
+}
+
+@keyframes scale-up {
+    0% {
+        width: 0;
+    }
+
+    100% {
+        width: 9rem;
+    }
+}
+
+.store-button-anim {
+    animation: scale-up 0.45s linear forwards;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 1s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+    opacity: 1;
 }
 </style>

@@ -38,10 +38,9 @@ watch(
 </script>
 
 <template>
-  <Header v-if="!disableHeader" />
-  <main class="-z-20" :class="route.fullPath !== '/login' ? '' : ''">
+  
+  <main class="-z-20 bg-shark-950" :class="route.fullPath !== '/login' ? '' : ''">
     <RouterView />
-    <strong v-if="!disableHeader" class="">Current route path: " {{ $route.fullPath }} " </strong> 
     
   </main>
 </template>

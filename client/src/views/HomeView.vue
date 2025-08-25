@@ -1,5 +1,4 @@
 <template>
-  <HomeCarousel></HomeCarousel>
   <Catalog />
   <section class="w-3/4 border border-red-400">
     Lorem ipsum dolor sit amet consectetur adipisicing elit. Eaque architecto delectus officiis placeat corporis

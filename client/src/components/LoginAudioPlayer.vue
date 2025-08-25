@@ -52,6 +52,23 @@ onMounted(() => {
     });
 });
 
+const fadeOut = (duration = 2000) => {
+    if (!audio.value) return;
+    const step = audio.value.volume / (duration / 100); // tiap 100ms turunin
+    const fade = setInterval(() => {
+        if (!audio.value) return;
+        if (audio.value.volume > step) {
+            audio.value.volume -= step;
+        } else {
+            audio.value.volume = 0;
+            clearInterval(fade);
+            audio.value.pause(); // stop biar ga lanjut diam
+        }
+    }, 100);
+};
+
+defineExpose({ fadeOut })
+
 
 const togglePlay = () => {
     if (!audio.value) return;

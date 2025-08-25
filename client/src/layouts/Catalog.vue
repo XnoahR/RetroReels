@@ -1,9 +1,7 @@
 <template>
-    <div class="flex h-auto mt-8 ">
-
-
+    <div class="flex h-auto mt-8 bg-shark-950">
         <aside
-            class="sticky top-0 flex flex-col  h-screen w-1/4 px-5 py-8 overflow-y-auto bg-[#FDF6EC] border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
+            class="sticky top-0 flex flex-col  h-screen w-1/4 px-5 py-8 overflow-y-auto bg-shark-950 border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
             <a href="#">
                 <img class="w-auto h-7" src="https://merakiui.com/images/logo.svg" alt="">
             </a>
@@ -139,53 +137,53 @@
             </div>
         </aside>
 
-        <main class="w-3/4 ps-8 bg-[#FDF6EC] grid max-lg:grid-cols-1 grid-cols-3 gap-x-3 gap-y-16 ">
+        <main class="w-3/4 ps-8 bg-shark-950 grid max-lg:grid-cols-1 grid-cols-3 gap-x-3 gap-y-16 ">
             <!-- Catalog here -->
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
-            <CatalogCard/>
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
+            <CatalogCard />
         </main>
     </div>
 </template>
