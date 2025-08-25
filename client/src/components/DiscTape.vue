@@ -19,7 +19,7 @@
   
       <!-- Center Image -->
       <div class="bg-cover border border-white rounded-xl overflow-hidden" :class="[centerWidth, centerHeight]" :style="{ backgroundImage: `url(${image})` }">
-        <div class="w-full h-4 bg-gray-600 rounded-md text-center text-white text-sm flex-col justify-start items-start" :class="[titleSize]"></div>
+        <div class="w-full h-4 pb-1 rounded-md text-white text-tiny flex justify-center items-center overflow-x-hidden overflow-y-hidden whitespace-nowrap" :class="[titleSize, titleBackgroundColor]">{{ title }}</div>
       </div>
   
       <!-- Right Disc -->
@@ -34,6 +34,7 @@
         </div>
       </div>
     </div>
+    
   </template>
   
 
@@ -42,6 +43,10 @@ import { ref, toRefs, defineProps } from 'vue';
 
 // Define props
 const props = defineProps({
+  title: {type: String, default:'Default-Tape'},
+  titleSize: { type: String, default: 'h-4' },
+  artist: {type: String, default: 'Unknown'},
+  titleBackgroundColor: {type: String, default: 'bg-gray-600'},
   width: { type: String, default: 'w-80' },
   height: { type: String, default: 'h-48' },
   baseColor: { type: String, default: 'bg-black' },
@@ -49,7 +54,6 @@ const props = defineProps({
   tapeRotation: { type: String, default: 'rotate-45' },
   centerWidth: { type: String, default: 'w-32' },
   centerHeight: { type: String, default: 'h-20' },
-  titleSize: { type: String, default: 'h-4' },
   discSize: { type: String, default: 'w-20 h-20' },
   discColor: { type: String, default: 'bg-black' },
   discMarginLeft: { type: String, default: 'ms-6' },

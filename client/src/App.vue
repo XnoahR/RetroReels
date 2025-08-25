@@ -39,7 +39,7 @@ watch(
 
 <template>
   <Header v-if="!disableHeader" />
-  <main class="" :class="route.fullPath !== '/login' ? '' : ''">
+  <main class="-z-20" :class="route.fullPath !== '/login' ? '' : ''">
     <RouterView />
     <strong v-if="!disableHeader" class="">Current route path: " {{ $route.fullPath }} " </strong> 
     

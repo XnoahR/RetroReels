@@ -1,41 +1,108 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import DiscTape from '../components/DiscTape.vue';
 import VynylCassete from '../components/VynylCassete.vue';
+import LoginAudioPlayer from '@/components/LoginAudioPlayer.vue';
 
+const currentSong = ref(0)
+const nextSong = () => {
+    currentSong.value = (currentSong.value + 1) % songList.length;
+}
+const previousSong = () => {
+    currentSong.value = currentSong.value === 0 ? songList.length - 1 : currentSong.value - 1;
+}
+
+
+const songList = reactive([
+    {
+        title: "Put Your Head on My Shoulder",
+        titleBackgroundColor: "bg-red-500",
+        artist: "Hu Tao",
+        baseColor: "bg-red-800",
+        borderColor: "border-red-400",
+        discColor: "bg-red-300",
+        sideColor: "bg-red-100",
+        image: "/ht.png",
+        music: "/music/Hu Tao - Put Your Head on My Shoulder.mp3"
+    },
+    {
+        title: "My Sadness is Liquid-Formed  Japanese Cover",
+        titleBackgroundColor: "bg-purple-500",
+        artist: "Lime",
+        baseColor: "bg-purple-800",
+        borderColor: "border-purple-400",
+        discColor: "bg-purple-300",
+        sideColor: "bg-purple-100",
+        image: "pasan.jpg",
+        music: "/music/ChiliChill - My Sadness is Liquid-Formed  Japanese Cover - 128.mp3"
+    },
+    {
+        title: " I Can't Stop The Loneliness",
+        titleBackgroundColor: "bg-sky-500",
+        artist: "ANRI",
+        baseColor: "bg-sky-800",
+        borderColor: "border-sky-400",
+        discColor: "bg-sky-300",
+        sideColor: "bg-sky-100",
+        image: "her.jpg",
+        music: "/music/ANRI - I Can't Stop The Loneliness - 128-1.mp3"
+    },
+    {
+        title: " Wanderlust",
+        titleBackgroundColor: "bg-gray-500",
+        artist: "Metric",
+        baseColor: "bg-gray-800",
+        borderColor: "border-gray-400",
+        discColor: "bg-black",
+        sideColor: "bg-gray-100",
+        image: "skizo.jpg",
+        music: "/music/[Metric] - Wanderlust - 128.mp3"
+    }
+])
 </script>
 
 <template>
-    <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 -z-50 overflow-hidden relative">
-        <vynyl-cassete />
+    <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 overflow-hidden relative">
+        <vynyl-cassete :image="songList[currentSong].image" />
         <div class="vhs-blocker">
-        <span
-            class="absolute w-auto h-auto font-bold text-center border border-white bottom-64 right-32 text-4xl text-white">
-            VHS </span><span
-            class="absolute bg-blue-500 w-1.5-screen bottom-32 h-8 -left-6 -rotate-12 block"></span><span
-            class="absolute bg-green-500 w-1.5-screen bottom-24 h-8 -left-6 -rotate-12 block"></span><span
-            class="absolute bg-yellow-500 w-1.5-screen bottom-16 h-8 -left-6 -rotate-12 block"></span><span
-            class="absolute bg-red-500 w-1.5-screen bottom-8 h-8 -left-6 -rotate-12 block"></span>
-            </div>
-        <<div
-            class="flex w-full z-10  max-w-sm mx-auto overflow-hidden border-2 border-black bg-white rounded-lg shadow-lg dark:bg-gray-800 lg:max-w-4xl">
-            <div class="hidden bg-slate-700 lg:flex lg:w-1/2  justify-center items-center">
-                <DiscTape />
+            <span
+                class="absolute w-auto h-auto font-bold text-center border border-white bottom-64 right-32 text-4xl text-white">
+                VHS </span><span
+                class="absolute bg-blue-500 w-1.5-screen bottom-32 h-8 -left-6 -rotate-12 block"></span><span
+                class="absolute bg-green-500 w-1.5-screen bottom-24 h-8 -left-6 -rotate-12 block"></span><span
+                class="absolute bg-yellow-500 w-1.5-screen bottom-16 h-8 -left-6 -rotate-12 block"></span><span
+                class="absolute bg-red-500 w-1.5-screen bottom-8 h-8 -left-6 -rotate-12 block"></span>
+        </div>
+        <div class="flex w-full z-10 form-fade max-w-sm mx-auto overflow-hidden retro-container lg:max-w-4xl">
+            <div class="hidden retro-left-panel lg:flex lg:w-1/2 flex-col justify-evenly space-y-24 pt-24 items-center">
+                <DiscTape :baseColor="songList[currentSong].baseColor" :title="songList[currentSong].title"
+                    :titleBackgroundColor="songList[currentSong].titleBackgroundColor"
+                    :borderColor="songList[currentSong].borderColor" :discColor="songList[currentSong].discColor"
+                    :image="songList[currentSong].image" :sideColor="songList[currentSong].sideColor" />
+                <LoginAudioPlayer :src="songList[currentSong].music"
+                    :title="songList[currentSong].artist + ' - ' + songList[currentSong].title" @next="nextSong"
+                    @previous="previousSong" />
             </div>
 
-            <div class="w-full px-6 py-8 md:px-8 lg:w-1/2">
-                <div class="flex justify-center mx-auto">
-                    <img class="w-auto h-7 sm:h-8" src="../../public/RR.png" alt="">
+            <div class="w-full px-8 py-8 lg:w-1/2">
+                <!-- Logo -->
+                <div class="flex justify-center mx-auto mb-6">
+                    <div class="retro-text text-3xl logo-glow terminal-flicker">RR</div>
                 </div>
 
-                <p class="mt-3 text-xl text-center text-gray-600 dark:text-gray-200">
-                    Welcome back!
-                </p>
+                <!-- Welcome Text -->
+                <div class="text-center mb-6">
+                    <div class="retro-text text-xl mb-2">ACCESS TERMINAL</div>
+                    <p class="text-gray-400 text-sm uppercase tracking-wide">
+                        Enter credentials to continue
+                    </p>
+                </div>
 
-                <a href="#"
-                    class="flex items-center justify-center mt-4 text-gray-600 transition-colors duration-300 transform border rounded-lg dark:border-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
-                    <div class="px-4 py-2">
-                        <svg class="w-6 h-6" viewBox="0 0 40 40">
+                <!-- Google Sign In -->
+                <button
+                    class="retro-secondary-button flex items-center justify-center w-full mt-4 rounded-lg py-3 px-4 transition-all duration-300">
+                    <div class="mr-3">
+                        <svg class="w-5 h-5" viewBox="0 0 40 40">
                             <path
                                 d="M36.3425 16.7358H35V16.6667H20V23.3333H29.4192C28.045 27.2142 24.3525 30 20 30C14.4775 30 10 25.5225 10 20C10 14.4775 14.4775 9.99999 20 9.99999C22.5492 9.99999 24.8683 10.9617 26.6342 12.5325L31.3483 7.81833C28.3717 5.04416 24.39 3.33333 20 3.33333C10.7958 3.33333 3.33335 10.7958 3.33335 20C3.33335 29.2042 10.7958 36.6667 20 36.6667C29.2042 36.6667 36.6667 29.2042 36.6667 20C36.6667 18.8825 36.5517 17.7917 36.3425 16.7358Z"
                                 fill="#FFC107" />
@@ -50,83 +117,226 @@ import VynylCassete from '../components/VynylCassete.vue';
                                 fill="#1976D2" />
                         </svg>
                     </div>
+                    <span class="font-bold text-sm uppercase tracking-wider">Google Auth</span>
+                </button>
 
-                    <span class="w-5/6 px-4 py-3 font-bold text-center">Sign in with Google</span>
-                </a>
-
-                <div class="flex items-center justify-between mt-4">
-                    <span class="w-1/5 border-b dark:border-gray-600 lg:w-1/4"></span>
-
-                    <a href="#"
-                        class="text-xs text-center text-gray-500 uppercase dark:text-gray-400 hover:underline">or
-                        login
-                        with email</a>
-
-                    <span class="w-1/5 border-b dark:border-gray-400 lg:w-1/4"></span>
+                <!-- Divider -->
+                <div class="flex items-center justify-between mt-6">
+                    <span class="w-1/5 border-b retro-divider"></span>
+                    <span class="retro-link text-center">Manual Login</span>
+                    <span class="w-1/5 border-b retro-divider"></span>
                 </div>
 
-                <div class="mt-4">
-                    <label class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-200"
-                        for="LoggingEmailAddress">Email Address</label>
-                    <input id="LoggingEmailAddress"
-                        class="block w-full px-4 py-2 text-gray-700 bg-white border rounded-lg dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring focus:ring-blue-300"
-                        type="email" />
-                </div>
-
-                <div class="mt-4">
-                    <div class="flex justify-between">
-                        <label class="block mb-2 text-sm font-medium text-gray-600 dark:text-gray-200"
-                            for="loggingPassword">Password</label>
-                        <a href="#" class="text-xs text-gray-500 dark:text-gray-300 hover:underline">Forget
-                            Password?</a>
-                    </div>
-
-                    <input id="loggingPassword"
-                        class="block w-full px-4 py-2 text-gray-700 bg-white border rounded-lg dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-opacity-40 dark:focus:border-blue-300 focus:outline-none focus:ring focus:ring-blue-300"
-                        type="password" />
-                </div>
-
+                <!-- Email Input -->
                 <div class="mt-6">
-                    <button
-                        class="w-full px-6 py-3 text-sm font-medium tracking-wide text-white capitalize transition-colors duration-300 transform bg-gray-800 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring focus:ring-gray-300 focus:ring-opacity-50">
-                        Sign In
+                    <label class="retro-label block mb-3" for="LoggingEmailAddress">User ID</label>
+                    <input id="LoggingEmailAddress" class="retro-input block w-full px-4 py-3 rounded-lg" type="email"
+                        placeholder="user@terminal.sys" />
+                </div>
+
+                <!-- Password Input -->
+                <div class="mt-6">
+                    <div class="flex justify-between mb-3">
+                        <label class="retro-label" for="loggingPassword">Access Key</label>
+                        <a href="#" class="retro-link">Reset Key?</a>
+                    </div>
+                    <input id="loggingPassword" class="retro-input block w-full px-4 py-3 rounded-lg" type="password"
+                        placeholder="••••••••" />
+                </div>
+
+                <!-- Sign In Button -->
+                <div class="mt-8">
+                    <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
+                        Initialize Session
                     </button>
                 </div>
 
-                <div class="flex items-center justify-between mt-4">
-                    <span class="w-1/5 border-b dark:border-gray-600 md:w-1/4"></span>
-
-                    <a href="#" class="text-xs text-gray-500 uppercase dark:text-gray-400 hover:underline">or sign
-                        up</a>
-
-                    <span class="w-1/5 border-b dark:border-gray-600 md:w-1/4"></span>
+                <!-- Sign Up Link -->
+                <div class="flex items-center justify-between mt-6">
+                    <span class="w-1/5 border-b retro-divider"></span>
+                    <a href="#" class="retro-link text-center">Create Account</a>
+                    <span class="w-1/5 border-b retro-divider"></span>
                 </div>
             </div>
-            </div>
+        </div>
     </section>
 </template>
 
 <style scoped>
-.vhs-blocker::before {
-  content: "";                /* WAJIB ada */
-  background: #2a2f35;        /* warna penutup */
-  position: absolute;
-  right: -50px;
-  bottom: -200px;
-  rotate: 170deg;
-  width: 100%;                /* full cover */
-  height: 40%;               /* full cover */
-  z-index: 10;  
-  animation: slide-up 1s ease-in forwards;
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
+/* Retro Container */
+.retro-container {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border: 2px solid #404040;
+    border-radius: 8px;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    font-family: 'Courier Prime', 'Courier New', monospace;
 }
 
-/* Animasi naik */
+/* Left Panel */
+.retro-left-panel {
+    background: linear-gradient(145deg, #333, #222);
+    border-right: 2px solid #404040;
+}
+
+/* Text Styles */
+.retro-text {
+    color: #00ff41;
+    text-shadow: 0 0 6px #00ff41;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+}
+
+.retro-label {
+    color: #888;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+}
+
+.retro-link {
+    color: #ff6b35;
+    text-shadow: 0 0 4px #ff6b35;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+}
+
+.retro-link:hover {
+    color: #ff7849;
+    text-shadow: 0 0 8px #ff7849;
+}
+
+/* Input Styles */
+.retro-input {
+    background: #0a0a0a;
+    border: 2px inset #333;
+    color: #00ff41;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 4px #00ff41;
+}
+
+.retro-input:focus {
+    outline: none;
+    border-color: #00ff41;
+    box-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+}
+
+.retro-input::placeholder {
+    color: #555;
+    text-shadow: none;
+}
+
+/* Button Styles */
+.retro-button {
+    background: linear-gradient(145deg, #ff6b35, #e55a2b);
+    border: 2px solid #ff6b35;
+    color: white;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.retro-button:hover {
+    background: linear-gradient(145deg, #ff7849, #f06439);
+    box-shadow: 0 0 16px rgba(255, 107, 53, 0.5);
+    transform: translateY(-1px);
+}
+
+.retro-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.4);
+}
+
+.retro-secondary-button {
+    background: linear-gradient(145deg, #404040, #2a2a2a);
+    border: 2px solid #555;
+    color: #ccc;
+    font-family: 'Courier Prime', 'Courier New', monospace;
+    transition: all 0.2s ease;
+}
+
+.retro-secondary-button:hover {
+    background: linear-gradient(145deg, #505050, #3a3a3a);
+    border-color: #666;
+    color: #fff;
+}
+
+/* Effects */
+.retro-divider {
+    border-color: #404040;
+}
+
+.logo-glow {
+    filter: drop-shadow(0 0 8px #00ff41);
+}
+
+.terminal-flicker {
+    animation: flicker 2s infinite alternate;
+}
+
+@keyframes flicker {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Original VHS Animation Styles */
+.vhs-blocker::before {
+    content: "";
+    background: #2a2f35;
+    position: absolute;
+    right: -50px;
+    bottom: -200px;
+    rotate: 170deg;
+    width: 100%;
+    height: 40%;
+    z-index: 10;
+    animation: slide-up 1s ease-in forwards;
+    pointer-events: none;
+}
+
+.form-fade {
+    animation: fade-in 1s ease-in forwards;
+}
+
 @keyframes slide-up {
-  0% {
-    transform: translateX(-50vh);    /* posisi awal */
-  }
-  100% {
-    transform: translateX(-175vh); /* geser ke atas sampai hilang dari screen */
-  }
+    0% {
+        transform: translateX(-50vh);
+    }
+
+    100% {
+        transform: translateX(-175vh);
+    }
+}
+
+@keyframes fade-in {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 </style>
