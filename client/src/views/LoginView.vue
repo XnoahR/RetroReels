@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import DiscTape from '../components/DiscTape.vue';
 import VynylCassete from '../components/VynylCassete.vue';
-import LoginAudioPlayer from '@/components/LoginAudioPlayer.vue';
+import LoginAudioPlayer from '../components/LoginAudioPlayer.vue';
 import { Store } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
@@ -470,7 +470,7 @@ const songList = reactive([
     bottom: -200px;
     rotate: 170deg;
     width: 100%;
-    height: 40%;
+    height: 33%;
     z-index: 10;
     animation: slide-up 1s ease-in forwards;
     pointer-events: none;
@@ -486,7 +486,7 @@ const songList = reactive([
     }
 
     100% {
-        transform: translateX(-175vh);
+        transform: translateX(-225vh);
     }
 }
 

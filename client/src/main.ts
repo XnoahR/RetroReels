@@ -8,7 +8,7 @@ const app = createApp(App);
 app.use(router);
 router.afterEach(to => {
   const defaultTitle = "Retro Reels";
-  document.title = to.name? `${to.name} - ${defaultTitle}` : defaultTitle;
+  document.title = to.name? `${String(to.name)} - ${defaultTitle}` : defaultTitle;
 })
 
 app.mount("#app");

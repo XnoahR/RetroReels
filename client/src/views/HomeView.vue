@@ -1,16 +1,19 @@
 <template>
-  <Catalog />
+  
+  <HomeLayout />
+  <!-- <Catalog />
   <section class="w-3/4 border border-red-400">
     Lorem ipsum dolor sit amet consectetur adipisicing elit. Eaque architecto delectus officiis placeat corporis
     doloremque minus, ipsam iure exercitationem blanditiis iusto mollitia itaque! Alias culpa doloremque nemo nisi. Fuga
     harum delectus eius perspiciatis architecto. Placeat cupiditate voluptas quidem, assumenda tempora inventore ea
     aperiam vero eius amet cumque obcaecati officiis fugiat.
-  </section>
+  </section> -->
 </template>
 
 <script setup>
 import HomeCarousel from '@/components/HomeCarousel.vue';
 import Catalog from '@/layouts/Catalog.vue';
+import HomeLayout from '@/layouts/HomeLayout.vue';
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 // Sample product data
 const products = ref([

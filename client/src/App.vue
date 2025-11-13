@@ -4,7 +4,7 @@ import { ref, onMounted, reactive, watch } from "vue";
 import { RouterView, useRoute } from 'vue-router'
 import Header from "./layouts/Header.vue";
 import ButtonVx from "./components/ButtonVx.vue";
-import customFetch from "./api.js";
+import customFetch from "./api.ts";
 
 const route = useRoute()
 const disableHeader = ref(false)
