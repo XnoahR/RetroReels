@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  products     Product[]
+  orders       Order[]
+
+  @@map("users")
+}
+
+model Product {
+  id       String @id @default(uuid())
+  userId   String 
+  designId String 
+
+  artist      String
+  title       String
+  price       Int
+  description String
+  image       String
+  previewUrl  String?
+
+  user      User      @relation(fields: [userId], references: [id])
+  vhsDesign VHSDesign @relation(fields: [designId], references: [id])
+  track     Track?
+  orders    Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("products")
+}
+
+model Track {
+  id String @id @default(uuid())
+
+  productId String  @unique
+  title     String
+  audioUrl  String
+
+  product   Product  @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("tracks")
+}
+
+model VHSDesign {
+  id   String @id @default(uuid())
+  name String
+
+  titleBackgroundColor String
+  baseColor            String
+  borderColor          String
+  discColor            String
+  sideColor            String
+
+  product Product[]
+
+  @@map("vhs_designs")
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+model Order {
+  id        String @id @default(uuid())
+  userId    String 
+  productId String 
+
+  price  Int
+  status OrderStatus
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("orders")
+}
