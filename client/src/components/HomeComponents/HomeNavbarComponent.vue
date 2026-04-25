@@ -1,21 +1,53 @@
 <template>
-   <nav id="nav-body" class="bg-black text-white h-16 flex justify-between py-2 px-3 items-center w-screen">
-    <img id="nav-logo" class="ml-3 h-6 w-64 object-contain" src="../../../public/nav-title.png">
-</img>
-    <div id="nav-main" class="border border-white bg-white rounded-3xl py-1  font-semibold flex justify-start items-center w-1/3 mr-32">
-        <a href="#" id="nav-github" class="w-10 h-10 text-center  ml-1  rounded-2xl">
-            <img src="../../../public/nav-github-black.png"></img>
+  <nav class="sticky top-0 z-50 border-b border-white/10 bg-black/90 text-white backdrop-blur">
+    <div class="flex h-16 items-center justify-between px-4 sm:px-6">
+      <RouterLink to="/home" class="flex items-center gap-3">
+        <img class="h-7 w-44 object-contain sm:w-56" src="../../../public/nav-title.png" alt="Retro Reels" />
+        <span class="hidden rounded-sm border border-serenade-400/40 px-2 py-1 text-tiny font-bold uppercase tracking-[0.22em] text-serenade-300 lg:inline">
+          Archive
+        </span>
+      </RouterLink>
+
+      <div class="hidden items-center rounded-md border border-white/10 bg-white/10 p-1 md:flex">
+        <RouterLink
+          v-for="route in routes"
+          :key="route.to"
+          :to="route.to"
+          class="flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold text-gray-300 transition hover:bg-white/10 hover:text-white"
+          active-class="bg-serenade-500 text-white shadow-[0_0_18px_rgba(242,112,29,0.35)]"
+        >
+          <component :is="route.icon" class="h-4 w-4" />
+          <span>{{ route.label }}</span>
+        </RouterLink>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="#"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/10 transition hover:border-serenade-300 hover:text-serenade-200"
+          aria-label="GitHub"
+        >
+          <Github class="h-5 w-5" />
         </a>
-        <div id="nav-route" class="flex justify-evenly w-5/6 ml-8">
-        <a href="#" id="nav-route-1" class="w-24 text-center h-8 px-2 pb-1 border border-white text-black rounded-2xl hover:bg-black hover:text-white ease-in-out transition-all hover:animate-pulse duration-300">Home</a>
-        <a href="#" id="nav-route-2" class="w-24 text-center h-auto px-2 pb-1 border border-white text-black rounded-2xl hover:bg-black hover:text-white ease-in-out transition-all hover:animate-pulse duration-300">Category</a>
-        <a href="#" id="nav-route-3" class="w-24 text-center h-auto px-2 pb-1 border border-white text-black rounded-2xl hover:bg-black hover:text-white ease-in-out transition-all hover:animate-pulse duration-300">Player</a>
-        <a href="#" id="nav-route-4" class="w-24 text-center h-auto px-2 pb-1 border border-white text-black rounded-2xl hover:bg-black hover:text-white ease-in-out transition-all hover:animate-pulse duration-300">Account</a>
-        </div>
+        <RouterLink
+          to="/login"
+          class="hidden h-10 items-center rounded-md bg-serenade-500 px-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-serenade-400 sm:inline-flex"
+        >
+          Account
+        </RouterLink>
+      </div>
     </div>
-   </nav>
+  </nav>
 </template>
 
 <script setup lang="ts">
+import { Github, Home, ListMusic, Radio, UserRound } from 'lucide-vue-next';
+import { RouterLink } from 'vue-router';
 
+const routes = [
+  { label: 'Home', to: '/home', icon: Home },
+  { label: 'Category', to: '/categories', icon: ListMusic },
+  { label: 'Player', to: '/home', icon: Radio },
+  { label: 'Account', to: '/login', icon: UserRound },
+];
 </script>

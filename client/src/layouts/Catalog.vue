@@ -1,195 +1,506 @@
 <template>
-    <div class="flex h-auto mt-8 bg-shark-950">
-        <aside
-            class="sticky top-0 flex flex-col  h-screen w-1/4 px-5 py-8 overflow-y-auto bg-shark-950 border-r rtl:border-r-0 rtl:border-l dark:bg-gray-900 dark:border-gray-700">
-            <a href="#">
-                <img class="w-auto h-7" src="https://merakiui.com/images/logo.svg" alt="">
-            </a>
-            <div class="flex flex-col justify-between flex-1 mt-6">
-                <nav class="flex-1 -mx-3 space-y-3 ">
-                    <div class="relative mx-3">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
-                                <path
-                                    d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"></path>
-                            </svg>
-                        </span>
-
-                        <input type="text"
-                            class="w-full py-1.5 pl-10 pr-4 text-gray-700 bg-white border rounded-md dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring"
-                            placeholder="Search" />
-                    </div>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Home</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Dashboard</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Projects</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 019 9v.375M10.125 2.25A3.375 3.375 0 0113.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 013.375 3.375M9 15l2.25 2.25L15 12" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Tasks</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Reporting</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Users</span>
-                    </a>
-
-                    <a class="flex items-center px-3 py-2 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-gray-200 hover:text-gray-700"
-                        href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="currentColor" class="w-5 h-5">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-
-                        <span class="mx-2 text-sm font-medium">Setting</span>
-                    </a>
-                </nav>
-
-                <!-- <div class="mt-6">
-                    <div class="p-3 bg-gray-100 rounded-lg dark:bg-gray-800">
-                        <h2 class="text-sm font-medium text-gray-800 dark:text-white">New feature availabel!</h2>
-
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Lorem ipsum dolor sit amet consectetur
-                            adipisicing
-                            elit. Natus harum officia eligendi velit.</p>
-
-                        <img class="object-cover w-full h-32 mt-2 rounded-lg"
-                            src="https://images.unsplash.com/photo-1658953229664-e8d5ebd039ba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1374&h=1374&q=80"
-                            alt="">
-                    </div>
-
-                    <div class="flex items-center justify-between mt-6">
-                        <a href="#" class="flex items-center gap-x-2">
-                            <img class="object-cover rounded-full h-7 w-7"
-                                src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&h=634&q=80"
-                                alt="avatar" />
-                            <span class="text-sm font-medium text-gray-700 dark:text-gray-200">John Doe</span>
-                        </a>
-
-                        <a href="#"
-                            class="text-gray-500 transition-colors duration-200 rotate-180 dark:text-gray-400 rtl:rotate-0 hover:text-blue-500 dark:hover:text-blue-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
-                            </svg>
-                        </a>
-                    </div>
-                </div> -->
-            </div>
-        </aside>
-
-        <main class="w-3/4 ps-8 bg-shark-950 grid max-lg:grid-cols-1 grid-cols-3 gap-x-3 gap-y-16 ">
-            <!-- Catalog here -->
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-            <CatalogCard />
-        </main>
+  <section class="relative flex min-h-[calc(100vh-4rem)] flex-col bg-shark-950 text-white">
+    <div class="border-b border-white/10 bg-shark-950/95 px-4 py-5 sm:px-6 lg:sticky lg:top-16 lg:z-30">
+      <div>
+        <p class="text-tiny font-semibold uppercase tracking-[0.24em] text-serenade-300">Now browsing</p>
+        <h2 class="text-xl font-bold sm:text-2xl">Retro Catalog</h2>
+      </div>
     </div>
+
+    <div class="flex flex-1 flex-col lg:flex-row">
+      <Transition name="filter-panel">
+        <aside
+          v-if="showFilters"
+          class="relative border-b border-white/10 bg-black/35 p-4 lg:sticky lg:top-[8.25rem] lg:h-[calc(100vh-8.25rem)] lg:w-1/4 lg:min-w-72 lg:border-b-0 lg:border-r lg:p-6"
+        >
+          <button
+            type="button"
+            class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/10 text-gray-300 transition hover:border-serenade-300 hover:text-serenade-200"
+            aria-label="Hide filters"
+            @click="showFilters = false"
+          >
+            <ChevronLeft class="h-4 w-4" />
+          </button>
+
+          <div class="space-y-6 pr-8">
+            <div class="relative">
+              <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-serenade-200" />
+              <input
+                v-model="search"
+                type="search"
+                class="h-11 w-full rounded-md border border-white/10 bg-shark-900 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-serenade-300 focus:ring-2 focus:ring-serenade-400/20"
+                placeholder="Search artist or title"
+              />
+            </div>
+
+            <div>
+              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">Genre</p>
+              <div class="grid grid-cols-2 gap-2 lg:grid-cols-1">
+                <button
+                  v-for="genre in genres"
+                  :key="genre"
+                  type="button"
+                  class="rounded-md border px-3 py-2 text-left text-sm transition"
+                  :class="selectedGenre === genre
+                    ? 'border-serenade-300 bg-serenade-500/20 text-serenade-100'
+                    : 'border-white/10 bg-white/5 text-gray-300 hover:border-white/25 hover:text-white'"
+                  @click="selectedGenre = genre"
+                >
+                  {{ genre }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">Format</p>
+              <div class="space-y-2">
+                <label
+                  v-for="format in formats"
+                  :key="format"
+                  class="flex cursor-pointer items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300"
+                >
+                  <span>{{ format }}</span>
+                  <input v-model="selectedFormats" :value="format" type="checkbox" class="h-4 w-4 accent-serenade-500" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </Transition>
+
+      <Transition name="filter-rail">
+        <button
+          v-if="!showFilters"
+          type="button"
+          class="sticky top-[8.25rem] z-20 hidden h-[calc(100vh-8.25rem)] w-12 shrink-0 items-start justify-center border-r border-white/10 bg-black/35 pt-6 text-gray-300 transition hover:bg-black/50 hover:text-serenade-200 lg:flex"
+          aria-label="Show filters"
+          @click="showFilters = true"
+        >
+          <ChevronRight class="h-5 w-5" />
+        </button>
+      </Transition>
+
+      <Transition name="filter-mobile">
+        <button
+          v-if="!showFilters"
+          type="button"
+          class="m-4 inline-flex h-10 items-center gap-2 rounded-md border border-white/10 bg-white/10 px-3 text-sm text-gray-200 lg:hidden"
+          @click="showFilters = true"
+        >
+          <ChevronRight class="h-4 w-4" />
+          Filters
+        </button>
+      </Transition>
+
+      <main class="flex-1 px-4 py-5 sm:px-6">
+        <div class="mb-5 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-2 text-sm text-gray-400">
+            <LayoutGrid class="h-4 w-4 text-serenade-300" />
+            <span>{{ filteredProducts.length }} tapes found</span>
+          </div>
+          <select
+            v-model="sortBy"
+            class="h-10 rounded-md border border-white/10 bg-shark-900 px-3 text-sm text-white outline-none focus:border-serenade-300"
+          >
+            <option value="featured">Featured</option>
+            <option value="price-low">Price low</option>
+            <option value="price-high">Price high</option>
+          </select>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 pb-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <article
+            v-for="product in filteredProducts"
+            :key="product.id"
+            class="group overflow-hidden rounded-lg border border-white/10 bg-[#171b20] shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-serenade-300/70"
+            :class="activeProduct === product.id ? 'is-playing border-serenade-300 shadow-[0_0_28px_rgba(242,112,29,0.32)] ring-1 ring-serenade-300/50' : ''"
+          >
+            <div class="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-shark-800 via-black to-shark-900">
+              <div class="absolute left-4 top-4 rounded bg-black/45 px-2 py-1 text-tiny font-bold uppercase tracking-[0.2em] text-serenade-200">
+                {{ product.format }}
+              </div>
+              <div
+                v-if="activeProduct === product.id"
+                class="absolute right-4 top-4 z-20 flex items-center gap-2 rounded bg-serenade-500 px-2 py-1 text-tiny font-black uppercase tracking-[0.18em] text-white shadow-[0_0_18px_rgba(242,112,29,0.45)]"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+                Playing
+              </div>
+              <VinylAlbum
+                v-if="product.format === 'Vinyl'"
+                :title="product.title"
+                :artist="product.artist"
+                :image="product.image"
+                :active="activeProduct === product.id"
+                class="scale-90"
+              />
+              <CassetteTape
+                v-else-if="product.format === 'Cassette'"
+                :title="product.title"
+                :artist="product.artist"
+                :image="product.image"
+                :base-color="product.baseColor"
+                :active="activeProduct === product.id"
+              />
+              <VhsTapeBox
+                v-else
+                :title="product.title"
+                :artist="product.artist"
+                :image="product.image"
+                :base-color="product.baseColor"
+                :border-color="product.borderColor"
+                :disc-color="product.discColor"
+                :side-color="product.sideColor"
+              />
+            </div>
+
+            <div class="space-y-3 p-4">
+              <audio
+                :ref="(el) => setAudioRef(el, product.id)"
+                :src="product.audio"
+                preload="metadata"
+                @ended="handleAudioEnded(product.id)"
+                @timeupdate="updateProgress(product.id)"
+              ></audio>
+
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <h3 class="card-title text-base font-bold leading-tight text-white">{{ product.title }}</h3>
+                  <p class="truncate text-sm text-gray-400">{{ product.artist }}</p>
+                </div>
+                <span class="shrink-0 rounded-md bg-serenade-500 px-2 py-1 text-xs font-bold text-white">
+                  ${{ product.price }}
+                </span>
+              </div>
+
+              <div class="flex items-center justify-between text-xs uppercase tracking-[0.16em] text-gray-500">
+                <span>{{ product.genre }}</span>
+                <span>{{ product.format }}</span>
+              </div>
+
+              <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-1 text-serenade-300">
+                  <Star v-for="star in product.rating" :key="star" class="h-3.5 w-3.5 fill-current" />
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-serenade-500 text-white transition hover:bg-serenade-400"
+                  :aria-label="`Play ${product.title}`"
+                  @click="togglePreview(product)"
+                >
+                  <Pause v-if="activeProduct === product.id" class="h-4 w-4 fill-current" />
+                  <Play v-else class="ml-0.5 h-4 w-4 fill-current" />
+                </button>
+              </div>
+
+              <div class="rounded-md border border-white/10 bg-black/30 p-2">
+                <div class="mb-2 flex items-center justify-between text-tiny uppercase tracking-[0.18em] text-gray-500">
+                  <div class="min-w-0 flex-1 overflow-hidden">
+                    <div v-if="activeProduct === product.id" class="marquee text-serenade-200">
+                      <span>Currently Playing - {{ product.artist }} - {{ product.title }}</span>
+                    </div>
+                    <span v-else>Preview</span>
+                  </div>
+                  <span>{{ product.duration }}</span>
+                </div>
+                <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    class="h-full rounded-full bg-serenade-400 transition-all"
+                    :style="{ width: `${progressById[product.id] || 0}%` }"
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </main>
+    </div>
+  </section>
 </template>
 
 <script setup>
-import CatalogCard from '../components/CatalogCard.vue';
-import DiscTape from '../components/DiscTape.vue';
+import { computed, reactive, ref } from 'vue';
+import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Search, Star } from 'lucide-vue-next';
+import CassetteTape from '../components/CassetteTape.vue';
+import VhsTapeBox from '../components/VhsTapeBox.vue';
+import VinylAlbum from '../components/VinylAlbum.vue';
 
+const showFilters = ref(true);
+const search = ref('');
+const selectedGenre = ref('All');
+const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
+const sortBy = ref('featured');
+const activeProduct = ref(null);
+const audioById = new Map();
+const progressById = reactive({});
+
+const setAudioRef = (el, id) => {
+  if (el) audioById.set(id, el);
+};
+
+const pauseProduct = (id) => {
+  const audio = audioById.get(id);
+  if (!audio) return;
+
+  audio.pause();
+};
+
+const togglePreview = async (product) => {
+  const audio = audioById.get(product.id);
+  if (!audio) return;
+
+  if (activeProduct.value === product.id) {
+    audio.pause();
+    activeProduct.value = null;
+    return;
+  }
+
+  if (activeProduct.value) {
+    pauseProduct(activeProduct.value);
+  }
+
+  activeProduct.value = product.id;
+
+  try {
+    await audio.play();
+  } catch (error) {
+    activeProduct.value = null;
+  }
+};
+
+const handleAudioEnded = (id) => {
+  if (activeProduct.value === id) {
+    activeProduct.value = null;
+  }
+  progressById[id] = 0;
+};
+
+const updateProgress = (id) => {
+  const audio = audioById.get(id);
+  if (!audio || !audio.duration) return;
+
+  progressById[id] = Math.min(100, (audio.currentTime / audio.duration) * 100);
+};
+
+const products = [
+  {
+    id: 1,
+    title: 'Moechakka Fire',
+    artist: 'Ellen Joe',
+    genre: 'J-Pop',
+    format: 'VHS',
+    price: 22,
+    rating: 5,
+    duration: '2:48',
+    audio: '/music/【ゼンゼロ】モエチャッカファイア   エレン・ジョー（CV：若山詩音）cover - 128.mp3',
+    image: '/ejm3.jpg',
+    baseColor: 'bg-black',
+    borderColor: 'border-white',
+    discColor: 'bg-red-500',
+    sideColor: 'bg-gray-500',
+  },
+  {
+    id: 2,
+    title: 'Put Your Head on My Shoulder',
+    artist: 'Hu Tao',
+    genre: 'Lo-fi',
+    format: 'Cassette',
+    price: 18,
+    rating: 4,
+    duration: '3:12',
+    audio: '/music/Hu Tao - Put Your Head on My Shoulder.mp3',
+    image: '/ht.png',
+    baseColor: 'bg-red-800',
+    borderColor: 'border-red-400',
+    discColor: 'bg-red-300',
+    sideColor: 'bg-red-100',
+  },
+  {
+    id: 3,
+    title: 'Liquid-Formed Sadness',
+    artist: 'Lime',
+    genre: 'City Pop',
+    format: 'VHS',
+    price: 26,
+    rating: 5,
+    duration: '3:40',
+    audio: '/music/ChiliChill - My Sadness is Liquid-Formed  Japanese Cover - 128.mp3',
+    image: '/pasan.jpg',
+    baseColor: 'bg-purple-800',
+    borderColor: 'border-purple-400',
+    discColor: 'bg-purple-300',
+    sideColor: 'bg-purple-100',
+  },
+  {
+    id: 4,
+    title: "I Can't Stop The Loneliness",
+    artist: 'ANRI',
+    genre: 'City Pop',
+    format: 'Vinyl',
+    price: 32,
+    rating: 5,
+    duration: '4:18',
+    audio: "/music/ANRI - I Can't Stop The Loneliness - 128-1.mp3",
+    image: '/her.jpg',
+    baseColor: 'bg-sky-800',
+    borderColor: 'border-sky-400',
+    discColor: 'bg-sky-300',
+    sideColor: 'bg-sky-100',
+  },
+  {
+    id: 5,
+    title: 'Wanderlust',
+    artist: 'Metric',
+    genre: 'Indie',
+    format: 'Cassette',
+    price: 20,
+    rating: 4,
+    duration: '3:31',
+    audio: '/music/[Metric] - Wanderlust - 128.mp3',
+    image: '/skizo.jpg',
+    baseColor: 'bg-gray-800',
+    borderColor: 'border-gray-400',
+    discColor: 'bg-black',
+    sideColor: 'bg-gray-100',
+  },
+  {
+    id: 6,
+    title: 'Yoru Tape',
+    artist: 'Night Archive',
+    genre: 'Lo-fi',
+    format: 'VHS',
+    price: 16,
+    rating: 4,
+    duration: '2:56',
+    audio: '/music/Hu Tao - Put Your Head on My Shoulder.mp3',
+    image: '/Yoru.jpeg',
+    baseColor: 'bg-bay-leaf-900',
+    borderColor: 'border-bay-leaf-300',
+    discColor: 'bg-bay-leaf-500',
+    sideColor: 'bg-bay-leaf-700',
+  },
+];
+
+const genres = computed(() => ['All', ...new Set(products.map((product) => product.genre))]);
+const formats = computed(() => [...new Set(products.map((product) => product.format))]);
+
+const filteredProducts = computed(() => {
+  const query = search.value.trim().toLowerCase();
+
+  const filtered = products.filter((product) => {
+    const matchesSearch = [product.title, product.artist].some((value) => value.toLowerCase().includes(query));
+    const matchesGenre = selectedGenre.value === 'All' || product.genre === selectedGenre.value;
+    const matchesFormat = selectedFormats.value.length === 0 || selectedFormats.value.includes(product.format);
+
+    return matchesSearch && matchesGenre && matchesFormat;
+  });
+
+  return [...filtered].sort((first, second) => {
+    if (sortBy.value === 'price-low') return first.price - second.price;
+    if (sortBy.value === 'price-high') return second.price - first.price;
+    return first.id - second.id;
+  });
+});
 </script>
+
+<style scoped>
+.filter-panel-enter-active,
+.filter-panel-leave-active {
+  transition:
+    opacity 0.38s ease,
+    transform 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    flex-basis 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    min-width 0.42s cubic-bezier(0.22, 1, 0.36, 1),
+    padding 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+  will-change: transform, opacity, flex-basis;
+}
+
+.filter-panel-enter-from,
+.filter-panel-leave-to {
+  flex-basis: 0;
+  min-width: 0;
+  opacity: 0;
+  padding-left: 0;
+  padding-right: 0;
+  transform: translateX(-1.4rem);
+}
+
+.filter-panel-enter-to,
+.filter-panel-leave-from {
+  flex-basis: 25%;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.filter-rail-enter-active,
+.filter-rail-leave-active,
+.filter-mobile-enter-active,
+.filter-mobile-leave-active {
+  transition:
+    opacity 0.3s ease,
+    transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.filter-rail-enter-from,
+.filter-rail-leave-to {
+  opacity: 0;
+  transform: translateX(-1rem);
+}
+
+.filter-mobile-enter-from,
+.filter-mobile-leave-to {
+  opacity: 0;
+  transform: translateY(-0.5rem);
+}
+
+.card-title {
+  display: -webkit-box;
+  min-height: 2.25rem;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
+}
+
+.is-playing {
+  background:
+    linear-gradient(180deg, rgba(242, 112, 29, 0.12), transparent 42%),
+    #171b20;
+}
+
+.is-playing :deep(.vinyl-disc),
+.is-playing :deep(.cassette-shell),
+.is-playing :deep(.vhs-tape) {
+  filter: drop-shadow(0 0 14px rgba(242, 112, 29, 0.42));
+}
+
+.marquee {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee span {
+  display: inline-block;
+  min-width: 100%;
+  animation: marquee 7s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 1023px) {
+  .filter-panel-enter-to,
+  .filter-panel-leave-from {
+    flex-basis: auto;
+  }
+}
+</style>
