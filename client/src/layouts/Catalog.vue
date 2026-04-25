@@ -108,7 +108,7 @@
           </select>
         </div>
 
-        <div class="grid grid-cols-1 gap-5 pb-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div class="grid grid-cols-1 gap-5 pb-40 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <article
             v-for="product in filteredProducts"
             :key="product.id"
@@ -173,9 +173,9 @@
                 </span>
               </div>
 
-              <div class="flex items-center justify-between text-xs uppercase tracking-[0.16em] text-gray-500">
-                <span>{{ product.genre }}</span>
-                <span>{{ product.format }}</span>
+              <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.16em]">
+                <span class="neon-tag" :class="genreTagClass(product.genre)">{{ product.genre }}</span>
+                <span class="neon-tag" :class="formatTagClass(product.format)">{{ product.format }}</span>
               </div>
 
               <div class="flex items-center justify-between gap-3">
@@ -215,15 +215,18 @@
         </div>
       </main>
     </div>
+
   </section>
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Search, Star } from 'lucide-vue-next';
 import CassetteTape from '../components/CassetteTape.vue';
 import VhsTapeBox from '../components/VhsTapeBox.vue';
 import VinylAlbum from '../components/VinylAlbum.vue';
+
+const emit = defineEmits(['player-state']);
 
 const showFilters = ref(true);
 const search = ref('');
@@ -231,6 +234,9 @@ const selectedGenre = ref('All');
 const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
 const sortBy = ref('featured');
 const activeProduct = ref(null);
+const currentProductId = ref(1);
+const isCurrentAudioPlaying = ref(false);
+const currentTime = ref(0);
 const audioById = new Map();
 const progressById = reactive({});
 
@@ -246,12 +252,17 @@ const pauseProduct = (id) => {
 };
 
 const togglePreview = async (product) => {
+  currentProductId.value = product.id;
+  emitPlayerState();
+
   const audio = audioById.get(product.id);
   if (!audio) return;
 
   if (activeProduct.value === product.id) {
     audio.pause();
     activeProduct.value = null;
+    isCurrentAudioPlaying.value = false;
+    emitPlayerState();
     return;
   }
 
@@ -263,16 +274,41 @@ const togglePreview = async (product) => {
 
   try {
     await audio.play();
+    isCurrentAudioPlaying.value = true;
+    emitPlayerState();
   } catch (error) {
     activeProduct.value = null;
+    isCurrentAudioPlaying.value = false;
+    emitPlayerState();
   }
+};
+
+const stopPreview = () => {
+  if (!currentProductId.value) return;
+
+  const audio = audioById.get(currentProductId.value);
+  if (audio) {
+    audio.pause();
+    audio.currentTime = 0;
+  }
+
+  progressById[currentProductId.value] = 0;
+  currentTime.value = 0;
+  activeProduct.value = null;
+  isCurrentAudioPlaying.value = false;
+  emitPlayerState();
 };
 
 const handleAudioEnded = (id) => {
   if (activeProduct.value === id) {
     activeProduct.value = null;
   }
+  if (currentProductId.value === id) {
+    isCurrentAudioPlaying.value = false;
+    currentTime.value = 0;
+  }
   progressById[id] = 0;
+  emitPlayerState();
 };
 
 const updateProgress = (id) => {
@@ -280,7 +316,14 @@ const updateProgress = (id) => {
   if (!audio || !audio.duration) return;
 
   progressById[id] = Math.min(100, (audio.currentTime / audio.duration) * 100);
+  if (currentProductId.value === id) {
+    currentTime.value = audio.currentTime;
+    isCurrentAudioPlaying.value = !audio.paused;
+    emitPlayerState();
+  }
 };
+
+const currentProduct = computed(() => products.find((product) => product.id === currentProductId.value));
 
 const products = [
   {
@@ -379,6 +422,198 @@ const products = [
     discColor: 'bg-bay-leaf-500',
     sideColor: 'bg-bay-leaf-700',
   },
+  {
+    id: 7,
+    title: "It's You",
+    artist: 'Hu Tao',
+    genre: 'Dream Pop',
+    format: 'Vinyl',
+    price: 30,
+    rating: 5,
+    duration: '3:34',
+    audio: "/music/Ali Gatie - It's You  cover by Hu Tao (AI Cover) - 128.mp3",
+    image: '/download (1).jpeg',
+    baseColor: 'bg-rose-950',
+    borderColor: 'border-rose-300',
+    discColor: 'bg-rose-400',
+    sideColor: 'bg-pink-100',
+  },
+  {
+    id: 8,
+    title: 'As The World Caves In',
+    artist: 'Hu Tao',
+    genre: 'Ballad',
+    format: 'VHS',
+    price: 24,
+    rating: 5,
+    duration: '3:38',
+    audio: '/music/As The World Caves In - Matt Maltese - Cover Hu Tao - Sub Español - 256.mp3',
+    image: '/download (11).jpg',
+    baseColor: 'bg-zinc-950',
+    borderColor: 'border-red-300',
+    discColor: 'bg-red-400',
+    sideColor: 'bg-stone-200',
+  },
+  {
+    id: 9,
+    title: 'Falling',
+    artist: 'Hu Tao',
+    genre: 'Ballad',
+    format: 'Cassette',
+    price: 21,
+    rating: 4,
+    duration: '3:57',
+    audio: '/music/Harry Styles - Falling cover by Hu Tao (AI Cover).mp3',
+    image: '/htlast.jpg',
+    baseColor: 'bg-orange-950',
+    borderColor: 'border-orange-300',
+    discColor: 'bg-amber-300',
+    sideColor: 'bg-orange-100',
+  },
+  {
+    id: 10,
+    title: '505',
+    artist: 'Hu Tao',
+    genre: 'Alt Rock',
+    format: 'Vinyl',
+    price: 28,
+    rating: 5,
+    duration: '4:13',
+    audio: '/music/hu tao - 505 (voice ai) - 128.mp3',
+    image: '/kyomoto.jpg',
+    baseColor: 'bg-slate-950',
+    borderColor: 'border-emerald-300',
+    discColor: 'bg-emerald-400',
+    sideColor: 'bg-slate-200',
+  },
+  {
+    id: 11,
+    title: 'Kukatakan Dengan Indah',
+    artist: 'Hu Tao',
+    genre: 'Indo Pop',
+    format: 'VHS',
+    price: 23,
+    rating: 4,
+    duration: '4:45',
+    audio: '/music/Hu Tao - Kukatakan Dengan Indah (Ai Cover) - 128.mp3',
+    image: '/oguri.jpeg',
+    baseColor: 'bg-teal-950',
+    borderColor: 'border-teal-300',
+    discColor: 'bg-cyan-300',
+    sideColor: 'bg-teal-100',
+  },
+  {
+    id: 12,
+    title: 'Semua Tentangmu',
+    artist: 'Hu Tao',
+    genre: 'Indo Pop',
+    format: 'Cassette',
+    price: 19,
+    rating: 4,
+    duration: '4:22',
+    audio: '/music/Hu Tao - Semua Tentangmu (Ai Cover) - 128.mp3',
+    image: '/subaruhoshino.jpeg',
+    baseColor: 'bg-fuchsia-950',
+    borderColor: 'border-fuchsia-300',
+    discColor: 'bg-pink-300',
+    sideColor: 'bg-fuchsia-100',
+  },
+  {
+    id: 13,
+    title: 'Separuh Aku',
+    artist: 'Hu Tao',
+    genre: 'Indo Rock',
+    format: 'Vinyl',
+    price: 27,
+    rating: 5,
+    duration: '4:20',
+    audio: '/music/Hu Tao - Separuh Aku (Ai Cover) - 128.mp3',
+    image: '/download (11).jpeg',
+    baseColor: 'bg-neutral-950',
+    borderColor: 'border-yellow-300',
+    discColor: 'bg-yellow-400',
+    sideColor: 'bg-neutral-100',
+  },
+  {
+    id: 14,
+    title: 'Lebih Dari Bintang',
+    artist: 'Hu Tao',
+    genre: 'Synth Pop',
+    format: 'VHS',
+    price: 25,
+    rating: 4,
+    duration: '3:52',
+    audio: '/music/Lebih Dari Bintang - Hu tao ( Ai Genshin).mp3',
+    image: '/download (12).jpg',
+    baseColor: 'bg-indigo-950',
+    borderColor: 'border-indigo-300',
+    discColor: 'bg-violet-300',
+    sideColor: 'bg-indigo-100',
+  },
+  {
+    id: 15,
+    title: 'Mariposa',
+    artist: 'Hu Tao',
+    genre: 'Dream Pop',
+    format: 'Cassette',
+    price: 22,
+    rating: 5,
+    duration: '3:30',
+    audio: '/music/Mariposa - Peach Tree Rascals  cover by Hu Tao (AI Cover) - 128.mp3',
+    image: '/d96e88a4-ce32-4e49-8f13-257aa58e4d0b.jpg',
+    baseColor: 'bg-pink-950',
+    borderColor: 'border-pink-300',
+    discColor: 'bg-lime-300',
+    sideColor: 'bg-pink-100',
+  },
+  {
+    id: 16,
+    title: 'Monokrom',
+    artist: 'Hu Tao',
+    genre: 'Acoustic',
+    format: 'Vinyl',
+    price: 29,
+    rating: 5,
+    duration: '3:35',
+    audio: '/music/monokrom - Hu Tao Ai Cover.mp3',
+    image: '/download (11).jpg',
+    baseColor: 'bg-stone-950',
+    borderColor: 'border-stone-200',
+    discColor: 'bg-stone-400',
+    sideColor: 'bg-stone-100',
+  },
+  {
+    id: 17,
+    title: 'December',
+    artist: 'Raiden',
+    genre: 'Winter Pop',
+    format: 'Cassette',
+    price: 20,
+    rating: 4,
+    duration: '4:05',
+    audio: '/music/Raiden - December (Ai Cover) - 128.mp3',
+    image: '/her.jpg',
+    baseColor: 'bg-cyan-950',
+    borderColor: 'border-cyan-200',
+    discColor: 'bg-sky-300',
+    sideColor: 'bg-cyan-100',
+  },
+  {
+    id: 18,
+    title: 'Somewhere Only We Know',
+    artist: 'Hu Tao',
+    genre: 'Acoustic',
+    format: 'VHS',
+    price: 24,
+    rating: 5,
+    duration: '3:49',
+    audio: '/music/Somewhere Only We Know-Keane-Cover IA Hu Tao-Sub español - 128.mp3',
+    image: '/Yoru.jpeg',
+    baseColor: 'bg-emerald-950',
+    borderColor: 'border-emerald-300',
+    discColor: 'bg-emerald-400',
+    sideColor: 'bg-green-100',
+  },
 ];
 
 const genres = computed(() => ['All', ...new Set(products.map((product) => product.genre))]);
@@ -401,6 +636,56 @@ const filteredProducts = computed(() => {
     return first.id - second.id;
   });
 });
+
+const emitPlayerState = () => {
+  const product = currentProduct.value || products[0];
+
+  emit('player-state', {
+    product,
+    isPlaying: isCurrentAudioPlaying.value,
+    currentTime: currentTime.value,
+    progress: progressById[product.id] || 0,
+    activeProductId: activeProduct.value,
+  });
+};
+
+onMounted(() => {
+  emitPlayerState();
+});
+
+defineExpose({
+  togglePreview,
+  stopPreview,
+});
+
+const genreTagClass = (genre) => {
+  const classes = {
+    'J-Pop': 'neon-pink',
+    'Lo-fi': 'neon-green',
+    'City Pop': 'neon-cyan',
+    Indie: 'neon-violet',
+    'Dream Pop': 'neon-rose',
+    Ballad: 'neon-red',
+    'Alt Rock': 'neon-emerald',
+    'Indo Pop': 'neon-teal',
+    'Indo Rock': 'neon-gold',
+    'Synth Pop': 'neon-indigo',
+    Acoustic: 'neon-stone',
+    'Winter Pop': 'neon-ice',
+  };
+
+  return classes[genre] || 'neon-amber';
+};
+
+const formatTagClass = (format) => {
+  const classes = {
+    VHS: 'neon-orange',
+    Cassette: 'neon-blue',
+    Vinyl: 'neon-lime',
+  };
+
+  return classes[format] || 'neon-amber';
+};
 </script>
 
 <style scoped>
@@ -461,6 +746,87 @@ const filteredProducts = computed(() => {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow-wrap: anywhere;
+}
+
+.neon-tag {
+  display: inline-flex;
+  max-width: 50%;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid currentColor;
+  padding: 0.25rem 0.5rem;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  box-shadow: 0 0 12px color-mix(in srgb, currentColor 26%, transparent);
+}
+
+.neon-pink {
+  color: #ff5bbd;
+}
+
+.neon-green {
+  color: #00ff88;
+}
+
+.neon-cyan {
+  color: #4de7ff;
+}
+
+.neon-violet {
+  color: #b68cff;
+}
+
+.neon-rose {
+  color: #ff7aa8;
+}
+
+.neon-red {
+  color: #ff5d5d;
+}
+
+.neon-emerald {
+  color: #37f5a6;
+}
+
+.neon-teal {
+  color: #2fffd2;
+}
+
+.neon-gold {
+  color: #ffd43b;
+}
+
+.neon-indigo {
+  color: #8ea2ff;
+}
+
+.neon-stone {
+  color: #d6d3d1;
+}
+
+.neon-ice {
+  color: #9ee7ff;
+}
+
+.neon-orange {
+  color: #ff8a3d;
+}
+
+.neon-blue {
+  color: #6ea8ff;
+}
+
+.neon-lime {
+  color: #d6ff62;
+}
+
+.neon-amber {
+  color: #ffd166;
 }
 
 .is-playing {
