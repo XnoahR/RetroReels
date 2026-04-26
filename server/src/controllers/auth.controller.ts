@@ -4,12 +4,22 @@ import prisma from '../utils/db.util.js';
 import { signAuthToken } from '../utils/auth.util.js';
 import type { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 
-const toSafeUser = (user: { id: string; name: string | null; email: string; role: string; credits: number }) => ({
+const toSafeUser = (user: {
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+  credits: number;
+  bio?: string | null;
+  avatarUrl?: string | null;
+}) => ({
   id: user.id,
   name: user.name,
   email: user.email,
   role: user.role,
   credits: user.credits,
+  bio: user.bio || '',
+  avatarUrl: user.avatarUrl || '',
 });
 
 export const register = async (req: Request, res: Response) => {
@@ -106,6 +116,69 @@ export const me = async (req: AuthenticatedRequest, res: Response) => {
     user: toSafeUser(user),
     settings: user.settings,
   });
+};
+
+export const updateProfile = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : undefined;
+  const bio = typeof req.body.bio === 'string' ? req.body.bio.trim() : undefined;
+  const avatarUrl = typeof req.body.avatarUrl === 'string' ? req.body.avatarUrl.trim() : undefined;
+
+  const data: any = {};
+  if (name !== undefined) data.name = name || null;
+  if (bio !== undefined) data.bio = bio || null;
+  if (avatarUrl !== undefined) data.avatarUrl = avatarUrl || null;
+
+  const user = await (prisma.user.update as any)({
+    where: { id: userId },
+    data,
+  });
+
+  return res.json({ message: 'Profile updated', user: toSafeUser(user) });
+};
+
+export const updatePassword = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const currentPassword = typeof req.body.currentPassword === 'string' ? req.body.currentPassword : '';
+  const newPassword = typeof req.body.newPassword === 'string' ? req.body.newPassword : '';
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: 'Current password and new password are required' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!isMatch) {
+    return res.status(401).json({ message: 'Current password is incorrect' });
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  const passwordHash = await bcrypt.hash(newPassword, salt);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash },
+  });
+
+  return res.json({ message: 'Password updated' });
 };
 
 export const logout = async (_req: Request, res: Response) => {

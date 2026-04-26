@@ -122,6 +122,10 @@ dist
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
+# Uploaded media
+client/public/image-upload/*
+!client/public/image-upload/.gitkeep
+
 # yarn v2
 .yarn/cache
 .yarn/unplugged

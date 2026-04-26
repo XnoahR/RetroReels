@@ -5,6 +5,7 @@ import VynylCassete from '@/components/auth/VynylCassete.vue';
 import DiscTape from '@/components/catalog/media/DiscTape.vue';
 import { Store } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
+import customFetch from '@/api';
 
 const router = useRouter()
 
@@ -130,21 +131,24 @@ const rollDoor = (door) => {
 }
 
 const GoToHome = () => {
-    if (casseteRef.value && playerRef.value) {
-        showOverlay.value = true
-        casseteRef.value.triggerExit()
-        playerRef.value.fadeOut(1100)
-        setTimeout(() => {
-            const vinyl = document.querySelector('#cassete-vynyl')
-            const door = vinyl ? createRollingDoor(vinyl) : null
-            router.push({ name: 'Home' }).then(() => {
-                requestAnimationFrame(() => {
-                    rollDoor(door)
-                })
-                setTimeout(() => door?.remove(), 1950)
-            })
-        }, 1040)
+    if (!casseteRef.value || !playerRef.value) {
+        router.push({ name: 'Home' });
+        return;
     }
+
+    showOverlay.value = true
+    casseteRef.value.triggerExit()
+    playerRef.value.fadeOut(1100)
+    setTimeout(() => {
+        const vinyl = document.querySelector('#cassete-vynyl')
+        const door = vinyl ? createRollingDoor(vinyl) : null
+        router.push({ name: 'Home' }).then(() => {
+            requestAnimationFrame(() => {
+                rollDoor(door)
+            })
+            setTimeout(() => door?.remove(), 1950)
+        })
+    }, 1040)
 }
 
 const nextSong = () => {
@@ -187,20 +191,16 @@ const handleLogin = async () => {
 
     try {
         errorMessage.value = '';
-        const res = await fetch('http://localhost:3000/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: loginEmail.value, password: loginPassword.value })
+        const { data } = await customFetch.post('auth/login', {
+            email: loginEmail.value,
+            password: loginPassword.value,
         });
-        const data = await res.json();
-        
-        if (!res.ok) throw new Error(data.message || 'Invalid credentials');
         
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         GoToHome();
     } catch (err) {
-        errorMessage.value = err.message;
+        errorMessage.value = err.response?.data?.message || err.message;
     }
 }
 
@@ -225,20 +225,17 @@ const handleRegister = async () => {
     try {
         errorMessage.value = '';
         
-        const res = await fetch('http://localhost:3000/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: registerName.value, email: registerEmail.value, password: registerPassword.value })
+        const { data } = await customFetch.post('auth/register', {
+            name: registerName.value,
+            email: registerEmail.value,
+            password: registerPassword.value,
         });
-        const data = await res.json();
-        
-        if (!res.ok) throw new Error(data.message || 'Registration failed');
         
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
         GoToHome();
     } catch (err) {
-        errorMessage.value = err.message;
+        errorMessage.value = err.response?.data?.message || err.message;
     }
 }
 

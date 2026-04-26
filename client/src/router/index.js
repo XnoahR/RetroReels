@@ -2,9 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import AboutView from '@/views/AboutView.vue';
 import ContactView from '@/views/ContactView.vue';
-import CategoryView from '@/views/CategoryView.vue';
+import SocialView from '@/views/SocialView.vue';
 import LoginView from '@/views/LoginView.vue';
 import LandingPageView from '@/views/LandingPageView.vue';
+import PlayerView from '@/views/PlayerView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,7 +23,8 @@ const router = createRouter({
       component: LandingPageView,
     },
     {
-      path: '/home',
+      path: '/Home',
+      alias: '/home',
       name: 'Home',
       component: HomeView,
       // route level code-splitting
@@ -36,9 +38,10 @@ const router = createRouter({
       component: ContactView,
     },
     {
-      path: '/categories',
-      name: 'Category',
-      component: CategoryView,
+      path: '/timeline',
+      alias: '/categories',
+      name: 'Social',
+      component: SocialView,
     },
     {
       path: '/login',
@@ -48,7 +51,14 @@ const router = createRouter({
     {
       path: '/player',
       name: 'Player',
-      component: () => import('../views/PlayerView.vue'),
+      component: PlayerView,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/cart',
+      name: 'Cart',
+      component: () => import('../views/CartView.vue'),
+      meta: { requiresAuth: true },
     },
     {
       path: '/product/:id',
@@ -59,8 +69,39 @@ const router = createRouter({
       path: '/account',
       name: 'Account',
       component: () => import('../views/AccountView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/profile/:id',
+      name: 'Profile',
+      component: () => import('../views/AccountView.vue'),
+    },
+    {
+      path: '/settings',
+      name: 'Settings',
+      component: () => import('../views/SettingsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin',
+      name: 'Admin',
+      component: () => import('../views/AdminDashboardView.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
     },
   ],
+});
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !localStorage.getItem('token')) {
+    return { name: 'Landing Page' };
+  }
+
+  if (to.meta.requiresAdmin) {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.role !== 'ADMIN') {
+      return { name: 'Account' };
+    }
+  }
 });
 
 export default router;

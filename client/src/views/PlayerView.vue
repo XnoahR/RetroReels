@@ -29,16 +29,76 @@
 
         <!-- Navigation Tabs -->
         <div class="flex items-center gap-8 mb-8 border-b border-white/5 pb-px overflow-x-auto snap-x hide-scrollbar">
-           <button @click="activeTab = 'all'" class="pb-3 border-b-2 font-bold uppercase tracking-widest text-sm transition-colors whitespace-nowrap snap-start shrink-0" :class="activeTab === 'all' ? 'border-serenade-500 text-serenade-400' : 'border-transparent text-gray-500 hover:text-gray-300'">All Media</button>
+           <button @click="activeTab = 'all'" class="pb-3 border-b-2 font-bold uppercase tracking-widest text-sm transition-colors whitespace-nowrap snap-start shrink-0" :class="activeTab === 'all' ? 'border-serenade-500 text-serenade-400' : 'border-transparent text-gray-500 hover:text-gray-300'">Playlists</button>
            <button @click="activeTab = 'favorites'" class="pb-3 border-b-2 font-bold uppercase tracking-widest text-sm transition-colors flex items-center gap-2 whitespace-nowrap snap-start shrink-0" :class="activeTab === 'favorites' ? 'border-serenade-500 text-serenade-400' : 'border-transparent text-gray-500 hover:text-gray-300'"><Heart class="w-4 h-4" :class="{'fill-current': activeTab === 'favorites'}" /> Favorites</button>
-           <button @click="activeTab = 'playlists'" class="pb-3 border-b-2 font-bold uppercase tracking-widest text-sm transition-colors whitespace-nowrap snap-start shrink-0" :class="activeTab === 'playlists' ? 'border-serenade-500 text-serenade-400' : 'border-transparent text-gray-500 hover:text-gray-300'">Playlists</button>
+           <button @click="activeTab = 'playlists'" class="pb-3 border-b-2 font-bold uppercase tracking-widest text-sm transition-colors whitespace-nowrap snap-start shrink-0" :class="activeTab === 'playlists' ? 'border-serenade-500 text-serenade-400' : 'border-transparent text-gray-500 hover:text-gray-300'">Manage</button>
+        </div>
+
+        <div v-if="libraryNotice || libraryError" class="mb-6 rounded-xl border px-4 py-3 text-sm font-bold" :class="libraryError ? 'border-red-400/30 bg-red-500/10 text-red-200' : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200'">
+          {{ libraryError || libraryNotice }}
         </div>
 
         <!-- TAB CONTENT: ALL MEDIA & FAVORITES -->
         <div v-if="activeTab === 'all' || activeTab === 'favorites'">
-           
+           <div v-if="activeTab === 'all' && !openedLibraryId" class="mb-8">
+              <div class="mb-4 flex items-center justify-between gap-4">
+                 <h2 class="text-xl font-black uppercase tracking-widest text-white">Playlists</h2>
+                 <button class="rounded-lg border border-dashed border-white/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-400 transition hover:border-serenade-500/40 hover:text-white" @click="activeTab = 'playlists'">
+                    <Plus class="mr-1 inline h-3 w-3" /> New Playlist
+                 </button>
+              </div>
+              <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+                <button
+                  class="group text-left"
+                  @click="openLibrary('all')"
+                >
+                  <div class="relative aspect-square overflow-hidden rounded-lg border bg-shark-900 transition group-hover:-translate-y-1 group-hover:border-serenade-500/50" :class="selectedLibraryId === 'all' ? 'border-serenade-500/70 shadow-lg shadow-serenade-500/10' : 'border-white/5'">
+                    <div class="grid h-full w-full grid-cols-2 grid-rows-2">
+                      <div v-for="(cover, index) in allMusicCoverCells" :key="`all-${index}`" class="min-h-0 min-w-0 border border-black/20 bg-white/5">
+                        <img v-if="cover" :src="cover" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center text-gray-700">
+                          <ListMusic class="h-6 w-6" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 class="mt-3 truncate font-bold text-white group-hover:text-serenade-400">All Musics</h3>
+                  <p class="text-xs font-mono uppercase tracking-widest text-gray-500">{{ tracks.length }} Tracks</p>
+                </button>
+                <button
+                  v-for="playlist in playlists"
+                  :key="playlist.id"
+                  class="group text-left"
+                  @click="openLibrary(playlist.id)"
+                >
+                  <div class="relative aspect-square overflow-hidden rounded-lg border bg-shark-900 transition group-hover:-translate-y-1 group-hover:border-serenade-500/50" :class="selectedLibraryId === playlist.id ? 'border-serenade-500/70 shadow-lg shadow-serenade-500/10' : 'border-white/5'">
+                    <div class="grid h-full w-full grid-cols-2 grid-rows-2">
+                      <div v-for="(cover, index) in playlistCoverCells(playlist)" :key="`${playlist.id}-${index}`" class="min-h-0 min-w-0 border border-black/20 bg-white/5">
+                        <img v-if="cover" :src="cover" class="h-full w-full object-cover" />
+                        <div v-else class="flex h-full w-full items-center justify-center text-gray-700">
+                          <ListMusic class="h-6 w-6" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <h3 class="mt-3 truncate font-bold text-white group-hover:text-serenade-400">{{ playlist.name }}</h3>
+                  <p class="text-xs font-mono uppercase tracking-widest text-gray-500">{{ playlist.items?.length || 0 }} Tracks</p>
+                </button>
+              </div>
+           </div>
+           <div v-if="activeTab === 'all' && openedLibraryId" class="mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/5 bg-black/25 px-4 py-3">
+              <div class="min-w-0">
+                <p class="text-xs font-mono uppercase tracking-widest text-gray-500">Now Browsing</p>
+                <h2 class="truncate text-xl font-black text-white">{{ openedLibraryTitle }}</h2>
+              </div>
+              <button class="rounded-lg border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-400 transition hover:border-serenade-500/40 hover:text-white" @click="closeLibrary">
+                Back
+              </button>
+           </div>
+
+           <div v-if="activeTab === 'favorites' || openedLibraryId">
            <div v-if="displayedTracks.length === 0" class="py-12 text-center">
-              <p class="text-gray-500 font-mono tracking-widest uppercase">No items found in this section.</p>
+              <p class="text-gray-500 font-mono tracking-widest uppercase">{{ libraryMessage }}</p>
            </div>
 
            <!-- Grid View -->
@@ -65,9 +125,15 @@
                         <p class="text-sm text-gray-400 truncate">{{ track.artist }}</p>
                         <p class="text-xs text-gray-500 font-mono mt-1">{{ track.duration }}</p>
                      </div>
-                     <button @click.stop="toggleFavorite(track)" class="text-gray-500 hover:text-white transition-colors shrink-0">
-                        <Heart class="w-5 h-5" :class="{'fill-serenade-400 text-serenade-400': isFavorite(track)}" />
-                     </button>
+                     <div class="flex items-center gap-2 shrink-0">
+                        <select v-if="playlists.length" class="max-w-24 rounded bg-black/50 px-2 py-1 text-[10px] text-gray-300 outline-none" @click.stop @change.stop="addTrackToPlaylist(track, $event.target.value); $event.target.value = ''">
+                          <option value="">Playlist</option>
+                          <option v-for="playlist in playlists" :key="playlist.id" :value="playlist.id">{{ playlist.name }}</option>
+                        </select>
+                        <button @click.stop="toggleFavorite(track)" class="text-gray-500 hover:text-white transition-colors">
+                           <Heart class="w-5 h-5" :class="{'fill-serenade-400 text-serenade-400': isFavorite(track)}" />
+                        </button>
+                     </div>
                   </div>
                 </div>
               </div>
@@ -97,6 +163,10 @@
                    <div class="flex items-center gap-6 shrink-0">
                       <span class="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] font-bold text-serenade-400 border border-white/10 uppercase tracking-widest hidden sm:inline-block">{{ track.format }}</span>
                       <span class="text-sm font-mono text-gray-500 w-12 text-right">{{ track.duration }}</span>
+                      <select v-if="playlists.length" class="rounded bg-black/50 px-2 py-1 text-[10px] text-gray-300 outline-none" @click.stop @change.stop="addTrackToPlaylist(track, $event.target.value); $event.target.value = ''">
+                        <option value="">Playlist</option>
+                        <option v-for="playlist in playlists" :key="playlist.id" :value="playlist.id">{{ playlist.name }}</option>
+                      </select>
                       <button @click.stop="toggleFavorite(track)" class="text-gray-500 hover:text-white transition-colors p-1">
                          <Heart class="w-5 h-5" :class="{'fill-serenade-400 text-serenade-400': isFavorite(track)}" />
                       </button>
@@ -104,35 +174,78 @@
                 </div>
               </div>
            </div>
+           </div>
         </div>
 
         <!-- TAB CONTENT: PLAYLISTS -->
         <div v-if="activeTab === 'playlists'">
            <div class="flex items-center justify-between mb-6">
               <h2 class="text-xl font-bold text-white">Your Playlists</h2>
-              <button class="px-4 py-2.5 bg-serenade-500 hover:bg-serenade-400 text-black font-bold text-xs uppercase tracking-widest rounded-lg flex items-center gap-2 transition-colors shadow-lg">
+              <button @click="createPlaylist" class="px-4 py-2.5 bg-serenade-500 hover:bg-serenade-400 text-black font-bold text-xs uppercase tracking-widest rounded-lg flex items-center gap-2 transition-colors shadow-lg">
                  <Plus class="w-4 h-4" /> Create Playlist
               </button>
            </div>
+
+           <div class="mb-6 rounded-xl border border-white/5 bg-black/30 p-4">
+              <label class="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Playlist Name</label>
+              <input v-model="newPlaylistName" class="w-full rounded-lg border border-white/10 bg-black/40 px-4 py-3 text-white outline-none focus:border-serenade-500/60" placeholder="Night Drive Mix" />
+           </div>
            
            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              <!-- Mock Playlist -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/5 bg-shark-900 transition-all hover:-translate-y-1 hover:border-serenade-500/30 hover:shadow-xl cursor-pointer p-6 flex flex-col items-center justify-center min-h-[200px] text-center">
+              <div v-for="playlist in playlists" :key="playlist.id" @click="selectPlaylist(playlist)" class="group relative overflow-hidden rounded-2xl border border-white/5 bg-shark-900 transition-all hover:-translate-y-1 hover:border-serenade-500/30 hover:shadow-xl cursor-pointer p-6 flex flex-col items-center justify-center min-h-[200px] text-center" :class="selectedPlaylistId === playlist.id ? 'border-serenade-500/60' : ''">
+                 <button class="absolute right-3 top-3 rounded-lg border border-white/10 p-2 text-gray-600 opacity-0 transition hover:border-red-400/40 hover:text-red-300 group-hover:opacity-100" @click.stop="deletePlaylist(playlist)" aria-label="Delete playlist">
+                    <Trash2 class="h-4 w-4" />
+                 </button>
                  <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-serenade-500 group-hover:text-black transition-colors text-gray-400 shadow-inner">
                     <ListMusic class="w-8 h-8" />
                  </div>
-                 <h3 class="font-bold text-white mb-1 group-hover:text-serenade-400 transition-colors">Night Drive Mix</h3>
-                 <p class="text-xs text-gray-500 uppercase tracking-widest font-mono">12 Tracks</p>
+                 <h3 class="font-bold text-white mb-1 group-hover:text-serenade-400 transition-colors">{{ playlist.name }}</h3>
+                 <p class="text-xs text-gray-500 uppercase tracking-widest font-mono">{{ playlist.items?.length || 0 }} Tracks</p>
               </div>
 
-              <!-- Mock Playlist -->
-              <div class="group relative overflow-hidden rounded-2xl border border-white/5 bg-shark-900 transition-all hover:-translate-y-1 hover:border-serenade-500/30 hover:shadow-xl cursor-pointer p-6 flex flex-col items-center justify-center min-h-[200px] text-center">
-                 <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:bg-serenade-500 group-hover:text-black transition-colors text-gray-400 shadow-inner">
-                    <ListMusic class="w-8 h-8" />
-                 </div>
-                 <h3 class="font-bold text-white mb-1 group-hover:text-serenade-400 transition-colors">City Pop Classics</h3>
-                 <p class="text-xs text-gray-500 uppercase tracking-widest font-mono">8 Tracks</p>
-              </div>
+              <p v-if="!playlists.length" class="col-span-full py-12 text-center text-gray-500 font-mono tracking-widest uppercase">No playlists yet.</p>
+           </div>
+
+           <div v-if="selectedPlaylist" class="mt-8 grid gap-6 lg:grid-cols-2">
+              <section class="rounded-2xl border border-white/5 bg-black/25 p-5">
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">{{ selectedPlaylist.name }} Tracks</h3>
+                <div v-if="selectedPlaylistTracks.length" class="flex flex-col gap-2">
+                   <div v-for="track in selectedPlaylistTracks" :key="track.id" class="flex items-center gap-3 rounded-xl border border-white/5 bg-black/30 p-3 text-left hover:border-serenade-500/40">
+                      <button class="flex min-w-0 flex-1 items-center gap-3 text-left" @click="playTrack(track, selectedPlaylistTracks)">
+                        <img :src="track.image" class="h-12 w-12 rounded object-cover" />
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate font-bold text-white">{{ track.title }}</span>
+                          <span class="block truncate text-xs text-gray-500">{{ track.artist }}</span>
+                        </span>
+                      </button>
+                      <button class="rounded-lg border border-white/10 p-2 text-gray-500 transition hover:border-red-400/40 hover:text-red-300" @click="removeTrackFromPlaylist(track, selectedPlaylist.id)" aria-label="Remove from playlist">
+                        <Trash2 class="h-4 w-4" />
+                      </button>
+                   </div>
+                </div>
+                <p v-else class="rounded-xl border border-dashed border-white/10 py-8 text-center text-xs font-mono uppercase tracking-widest text-gray-500">This playlist is empty.</p>
+              </section>
+
+              <section class="rounded-2xl border border-white/5 bg-black/25 p-5">
+                <h3 class="mb-4 text-sm font-bold uppercase tracking-widest text-gray-400">Add Owned Tracks</h3>
+                <div v-if="availablePlaylistTracks.length" class="flex max-h-[420px] flex-col gap-2 overflow-y-auto pr-1">
+                   <div v-for="track in availablePlaylistTracks" :key="track.id" class="flex items-center gap-3 rounded-xl border border-white/5 bg-black/30 p-3">
+                      <img :src="track.image" class="h-12 w-12 rounded object-cover" />
+                      <span class="min-w-0 flex-1">
+                        <span class="block truncate font-bold text-white">{{ track.title }}</span>
+                        <span class="block truncate text-xs text-gray-500">{{ track.artist }}</span>
+                      </span>
+                      <button class="rounded-lg bg-serenade-500 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-black transition hover:bg-serenade-400" @click="addTrackToPlaylist(track, selectedPlaylist.id)">
+                        Add
+                      </button>
+                   </div>
+                </div>
+                <p v-else class="rounded-xl border border-dashed border-white/10 py-8 text-center text-xs font-mono uppercase tracking-widest text-gray-500">All owned tracks are in this playlist.</p>
+              </section>
+           </div>
+
+           <div v-else-if="playlists.length" class="mt-8 rounded-xl border border-dashed border-white/10 py-8 text-center text-xs font-mono uppercase tracking-widest text-gray-500">
+              Select a playlist to manage tracks.
            </div>
         </div>
 
@@ -140,7 +253,7 @@
 
       <!-- The Audio Player (Exact style as HomeView) -->
       <Teleport to="body">
-        <aside class="mini-player" aria-label="Audio player">
+        <aside v-if="showMiniPlayer" class="mini-player" aria-label="Audio player">
           <div class="mini-main">
             <div class="mini-screen cursor-pointer" @click="toggleFullscreen">
               <div class="mini-track">
@@ -232,7 +345,7 @@
             <div class="relative z-10 flex-1 flex items-center justify-center py-10">
                <div class="scale-100 sm:scale-100 lg:scale-[1.1] origin-center pointer-events-none w-full flex justify-center">
                   <!-- VINYL -->
-                  <div v-if="currentTrack.format === 'Vinyl'" class="w-full max-w-[340px] sm:max-w-[500px] lg:max-w-[600px] aspect-[4/3] bg-gradient-to-b from-[#1a1a20] to-[#0f0f13] rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.1)] border border-white/10 p-4 sm:p-8 flex items-center relative overflow-hidden">
+                  <div v-if="currentTrack.format === 'Vinyl'" class="w-full max-w-[340px] sm:max-w-[500px] lg:max-w-[600px] aspect-[4/3] bg-gradient-to-b from-[#1a1a20] to-[#0f0f13] rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8),inset_0_2px_0_rgba(255,255,255,0.1)] border border-white/10 p-4 sm:p-8 flex items-center justify-center relative overflow-hidden">
                      <div class="w-56 h-56 sm:w-72 sm:h-72 lg:w-80 lg:h-80 rounded-full bg-gradient-to-br from-gray-800 to-black shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-4 border-gray-700 flex items-center justify-center relative flex-shrink-0">
                         <div class="w-[90%] h-[90%] rounded-full bg-[#050505] flex items-center justify-center shadow-inner relative" :class="{'animate-[spin_6s_linear_infinite]': isPlaying}">
                           <div class="absolute inset-2 rounded-full border border-white/5"></div>
@@ -247,7 +360,7 @@
                            <div class="absolute inset-0.5 sm:inset-1 bg-white/50 rounded-full"></div>
                         </div>
                      </div>
-                     <div class="absolute right-4 sm:right-12 lg:right-20 top-8 sm:top-16 w-12 sm:w-20 h-12 sm:h-20 bg-gradient-to-br from-[#222] to-[#111] rounded-full border-[2px] sm:border-[4px] border-[#333] shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex items-center justify-center z-10">
+                     <div class="absolute right-10 sm:right-16 lg:right-24 top-8 sm:top-16 w-12 sm:w-20 h-12 sm:h-20 bg-gradient-to-br from-[#222] to-[#111] rounded-full border-[2px] sm:border-[4px] border-[#333] shadow-[0_10px_20px_rgba(0,0,0,0.5)] flex items-center justify-center z-10">
                         <div class="w-6 sm:w-10 h-6 sm:h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full shadow-inner relative">
                            <div class="absolute inset-2 sm:inset-3 bg-black rounded-full"></div>
                         </div>
@@ -366,39 +479,116 @@
     </section>
 
     <!-- Hidden Audio -->
-    <audio ref="audioRef" :src="currentTrack?.audio"></audio>
+    <audio ref="audioRef" :src="currentTrack.audio"></audio>
   </HomeLayout>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
-import { products } from '@/data/catalogProducts';
-import { Play, Pause, Square, SkipBack, SkipForward, Shuffle, Volume2, Maximize2, Minimize2, LayoutGrid, List, Heart, Plus, ListMusic } from 'lucide-vue-next';
+import customFetch from '@/api';
+import { Play, Pause, Square, SkipBack, SkipForward, Shuffle, Volume2, Maximize2, Minimize2, LayoutGrid, List, Heart, Plus, ListMusic, Trash2 } from 'lucide-vue-next';
 
-// Static bought music list
-const originalTracks = products.slice(0, 12);
-const tracks = ref([...originalTracks]);
+defineOptions({ name: 'PlayerView' });
+
+const route = useRoute();
+
+const fallbackTrack = {
+  id: '',
+  title: 'No purchased music',
+  artist: 'Buy music from the shop',
+  format: 'VHS',
+  duration: '0:00',
+  image: '/Yoru.jpeg',
+  audio: '',
+};
+
+const originalTracks = ref([]);
+const tracks = ref([]);
+const playbackQueue = ref([]);
+const playlists = ref([]);
+const favorites = ref([]);
+const isLoadingLibrary = ref(false);
+const libraryError = ref('');
+const libraryNotice = ref('');
+const newPlaylistName = ref('');
+const selectedPlaylistId = ref('');
+const selectedLibraryId = ref('all');
+const openedLibraryId = ref('');
 
 // View State
 const viewMode = ref('grid'); // 'grid' | 'list'
 const activeTab = ref('all'); // 'all' | 'favorites' | 'playlists'
-const favorites = ref([originalTracks[0]?.id, originalTracks[2]?.id].filter(Boolean)); 
 
 const displayedTracks = computed(() => {
   if (activeTab.value === 'favorites') {
     return tracks.value.filter(t => favorites.value.includes(t.id));
   }
+  if (activeTab.value === 'all' && openedLibraryId.value && openedLibraryId.value !== 'all') {
+    const playlist = playlists.value.find((item) => item.id === openedLibraryId.value);
+    return (playlist?.items || []).map((item) => mapProductToTrack(item.product)).filter(Boolean);
+  }
   return tracks.value;
 });
 
+const selectedPlaylist = computed(() => playlists.value.find((playlist) => playlist.id === selectedPlaylistId.value));
+const selectedPlaylistTracks = computed(() => (selectedPlaylist.value?.items || []).map((item) => mapProductToTrack(item.product)).filter(Boolean));
+const selectedPlaylistTrackIds = computed(() => new Set((selectedPlaylist.value?.items || []).map((item) => item.productId)));
+const availablePlaylistTracks = computed(() => tracks.value.filter((track) => !selectedPlaylistTrackIds.value.has(track.id)));
+const allMusicCoverCells = computed(() => coverCellsFromTracks(tracks.value));
+const openedLibraryTitle = computed(() => {
+  if (openedLibraryId.value === 'all') return 'All Musics';
+  return playlists.value.find((playlist) => playlist.id === openedLibraryId.value)?.name || 'Playlist';
+});
+const libraryMessage = computed(() => {
+  if (isLoadingLibrary.value) return 'Loading your purchased music...';
+  if (libraryError.value) return libraryError.value;
+  if (activeTab.value === 'favorites') return 'No favorite purchased tracks yet.';
+  if (activeTab.value === 'all' && openedLibraryId.value !== 'all') return 'No tracks in this playlist yet.';
+  return 'No purchased music yet. Buy music from the shop to unlock it here.';
+});
+
+const playlistTracks = (playlist) => (playlist?.items || []).map((item) => mapProductToTrack(item.product)).filter(Boolean);
+const coverCellsFromTracks = (items) => {
+  const covers = items.map((track) => track.image).filter(Boolean).slice(0, 4);
+  return [...covers, ...Array(Math.max(0, 4 - covers.length)).fill(null)];
+};
+const playlistCoverCells = (playlist) => coverCellsFromTracks(playlistTracks(playlist));
+
+let noticeTimer;
+const showLibraryNotice = (message) => {
+  libraryError.value = '';
+  libraryNotice.value = message;
+  window.clearTimeout(noticeTimer);
+  noticeTimer = window.setTimeout(() => {
+    libraryNotice.value = '';
+  }, 2500);
+};
+
 const isFavorite = (track) => favorites.value.includes(track.id);
-const toggleFavorite = (track) => {
-  if (isFavorite(track)) {
-    favorites.value = favorites.value.filter(id => id !== track.id);
-  } else {
-    favorites.value.push(track.id);
+const toggleFavorite = async (track) => {
+  try {
+    if (isFavorite(track)) {
+      await customFetch.delete(`me/favorites/${track.id}`);
+      favorites.value = favorites.value.filter(id => id !== track.id);
+    } else {
+      await customFetch.post(`me/favorites/${track.id}`);
+      favorites.value.push(track.id);
+    }
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not update favorites.';
   }
+};
+
+const openLibrary = (libraryId) => {
+  selectedLibraryId.value = libraryId;
+  openedLibraryId.value = libraryId;
+  activeTab.value = 'all';
+};
+
+const closeLibrary = () => {
+  openedLibraryId.value = '';
 };
 
 const audioRef = ref(null);
@@ -412,9 +602,15 @@ const currentIndex = ref(0);
 const progress = ref(0);
 const currentTime = ref(0);
 const durationMs = ref(0);
-const volume = ref(0.8);
+const savedVolume = Number(localStorage.getItem('retroReelsPlayerVolume'));
+const volume = ref(Number.isFinite(savedVolume) ? Math.min(1, Math.max(0, savedVolume)) : 0.8);
 
-const currentTrack = computed(() => tracks.value[currentIndex.value] || tracks.value[0]);
+const activeQueue = computed(() => playbackQueue.value);
+const currentTrack = computed(() => activeQueue.value[currentIndex.value] || fallbackTrack);
+const showMiniPlayer = computed(() => {
+  const visibleRoutes = new Set(['Social', 'Player', 'Account', 'Profile', 'Settings']);
+  return tracks.value.length > 0 && visibleRoutes.has(route.name);
+});
 
 const volumePercent = computed(() => Math.round(volume.value * 100));
 const volumeKnobAngle = computed(() => -135 + volume.value * 270);
@@ -431,7 +627,7 @@ const formatTime = (timeInSeconds) => {
 };
 
 const togglePlay = () => {
-  if (!audioRef.value) return;
+  if (!audioRef.value || !currentTrack.value.audio) return;
   if (isPlaying.value) { audioRef.value.pause(); } else { audioRef.value.play(); }
   isPlaying.value = !isPlaying.value;
 };
@@ -445,35 +641,44 @@ const stopAudio = () => {
   currentTime.value = 0;
 };
 
-const playTrack = (track) => {
-  const index = tracks.value.findIndex(t => t.id === track.id);
+const playTrack = (track, queue = displayedTracks.value) => {
+  const scopedQueue = queue.length ? [...queue] : [track];
+  const index = scopedQueue.findIndex(t => t.id === track.id);
   if (index !== -1) {
+    playbackQueue.value = scopedQueue;
     currentIndex.value = index;
     setTimeout(() => { if (audioRef.value) { audioRef.value.play(); isPlaying.value = true; } }, 50);
   }
 };
 
 const nextTrack = () => {
-  currentIndex.value = (currentIndex.value + 1) % tracks.value.length;
+  if (!activeQueue.value.length) return;
+  if (currentIndex.value >= activeQueue.value.length - 1) {
+    stopAudio();
+    return;
+  }
+  currentIndex.value += 1;
   setTimeout(() => { if (audioRef.value && isPlaying.value) { audioRef.value.play(); } }, 50);
 };
 
 const prevTrack = () => {
-  currentIndex.value = (currentIndex.value - 1 + tracks.value.length) % tracks.value.length;
+  if (!activeQueue.value.length) return;
+  currentIndex.value = Math.max(0, currentIndex.value - 1);
   setTimeout(() => { if (audioRef.value && isPlaying.value) { audioRef.value.play(); } }, 50);
 };
 
 const randomizeQueue = () => {
+  if (!tracks.value.length) return;
   isRandomized.value = !isRandomized.value;
   if (isRandomized.value) {
-    const shuffled = [...tracks.value].sort(() => Math.random() - 0.5);
+    const shuffled = [...activeQueue.value].sort(() => Math.random() - 0.5);
     const currentId = currentTrack.value.id;
-    tracks.value = [currentTrack.value, ...shuffled.filter(t => t.id !== currentId)];
+    playbackQueue.value = [currentTrack.value, ...shuffled.filter(t => t.id !== currentId)];
     currentIndex.value = 0;
   } else {
     const currentId = currentTrack.value.id;
-    tracks.value = [...originalTracks];
-    currentIndex.value = tracks.value.findIndex(t => t.id === currentId);
+    playbackQueue.value = [...displayedTracks.value];
+    currentIndex.value = activeQueue.value.findIndex(t => t.id === currentId);
   }
 };
 
@@ -527,9 +732,136 @@ const stopVolumeDrag = () => {
   activeKnob = null;
 };
 
-watch(volume, (newVol) => { if (audioRef.value) audioRef.value.volume = newVol; });
+watch(volume, (newVol) => {
+  if (audioRef.value) audioRef.value.volume = newVol;
+  localStorage.setItem('retroReelsPlayerVolume', String(newVol));
+});
+
+const mapProductToTrack = (product) => {
+  if (!product) return null;
+
+  return {
+    id: product.id,
+    title: product.title,
+    artist: product.artist,
+    format: product.format || 'VHS',
+    duration: product.duration || '0:00',
+    image: product.image || '/Yoru.jpeg',
+    audio: product.track?.audioUrl || product.previewUrl || '',
+  };
+};
+
+const loadLibrary = async () => {
+  isLoadingLibrary.value = true;
+  libraryError.value = '';
+
+  try {
+    const previousTrackId = currentTrack.value.id;
+    const previousPlaylistId = selectedPlaylistId.value;
+    const [ordersRes, favoritesRes, playlistsRes] = await Promise.all([
+      customFetch.get('orders'),
+      customFetch.get('me/favorites'),
+      customFetch.get('me/playlists'),
+    ]);
+
+    const purchasedTracks = (ordersRes.data.data || [])
+      .map((order) => mapProductToTrack(order.product))
+      .filter(Boolean);
+    const uniqueTracks = Array.from(new Map(purchasedTracks.map((track) => [track.id, track])).values());
+
+    originalTracks.value = uniqueTracks;
+    tracks.value = [...uniqueTracks];
+    favorites.value = (favoritesRes.data.data || []).map((favorite) => favorite.productId);
+    playlists.value = playlistsRes.data.data || [];
+    const refreshedById = new Map(uniqueTracks.map((track) => [track.id, track]));
+    selectedPlaylistId.value = playlists.value.some((playlist) => playlist.id === previousPlaylistId) ? previousPlaylistId : '';
+    if (selectedLibraryId.value !== 'all' && !playlists.value.some((playlist) => playlist.id === selectedLibraryId.value)) {
+      selectedLibraryId.value = 'all';
+    }
+    if (openedLibraryId.value !== 'all' && openedLibraryId.value && !playlists.value.some((playlist) => playlist.id === openedLibraryId.value)) {
+      openedLibraryId.value = '';
+    }
+    playbackQueue.value = playbackQueue.value.length
+      ? playbackQueue.value.map((track) => refreshedById.get(track.id)).filter(Boolean)
+      : [...uniqueTracks];
+    const nextIndex = playbackQueue.value.findIndex((track) => track.id === previousTrackId);
+    currentIndex.value = nextIndex === -1 ? 0 : nextIndex;
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not load your library.';
+  } finally {
+    isLoadingLibrary.value = false;
+  }
+};
+
+const createPlaylist = async () => {
+  const name = newPlaylistName.value.trim();
+  if (!name) return;
+
+  try {
+    const response = await customFetch.post('me/playlists', { name });
+    newPlaylistName.value = '';
+    selectedPlaylistId.value = response.data.data.id;
+    selectedLibraryId.value = response.data.data.id;
+    openedLibraryId.value = response.data.data.id;
+    await loadLibrary();
+    activeTab.value = 'all';
+    showLibraryNotice('Playlist created.');
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not create playlist.';
+  }
+};
+
+const addTrackToPlaylist = async (track, playlistId) => {
+  if (!playlistId) return;
+
+  try {
+    await customFetch.post(`me/playlists/${playlistId}/items/${track.id}`);
+    selectedPlaylistId.value = playlistId;
+    await loadLibrary();
+    showLibraryNotice(`${track.title} added to playlist.`);
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not add track to playlist.';
+  }
+};
+
+const removeTrackFromPlaylist = async (track, playlistId) => {
+  if (!playlistId) return;
+
+  try {
+    await customFetch.delete(`me/playlists/${playlistId}/items/${track.id}`);
+    selectedPlaylistId.value = playlistId;
+    await loadLibrary();
+    showLibraryNotice(`${track.title} removed from playlist.`);
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not remove track from playlist.';
+  }
+};
+
+const deletePlaylist = async (playlist) => {
+  try {
+    await customFetch.delete(`me/playlists/${playlist.id}`);
+    if (selectedPlaylistId.value === playlist.id) {
+      selectedPlaylistId.value = '';
+    }
+    if (selectedLibraryId.value === playlist.id) {
+      selectedLibraryId.value = 'all';
+    }
+    if (openedLibraryId.value === playlist.id) {
+      openedLibraryId.value = '';
+    }
+    await loadLibrary();
+    showLibraryNotice('Playlist deleted.');
+  } catch (error) {
+    libraryError.value = error.response?.data?.message || 'Could not delete playlist.';
+  }
+};
+
+const selectPlaylist = (playlist) => {
+  selectedPlaylistId.value = selectedPlaylistId.value === playlist.id ? '' : playlist.id;
+};
 
 onMounted(() => {
+  loadLibrary();
   if (audioRef.value) {
     audioRef.value.volume = volume.value;
     audioRef.value.addEventListener("loadedmetadata", () => { durationMs.value = audioRef.value.duration; });
@@ -555,18 +887,20 @@ onMounted(() => {
 /* EXACT COPY OF HomeView.vue .mini-player css */
 .mini-player {
   position: fixed;
-  right: 2rem;
-  bottom: 2rem;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 2147483000;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 7.25rem;
   gap: 1rem;
-  width: min(30rem, calc(100vw - 2rem));
+  width: 100%;
   align-items: stretch;
   border: 2px solid #404040;
-  border-radius: 8px;
+  border-width: 2px 0 0;
+  border-radius: 0;
   background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-  padding: 1rem;
+  padding: 0.85rem max(1rem, calc((100vw - 84rem) / 2));
   color: #ccc;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.42),
@@ -578,6 +912,7 @@ onMounted(() => {
 
 .mini-cover {
   display: block;
+  align-self: center;
   height: 7.25rem;
   width: 7.25rem;
   overflow: hidden;
@@ -614,6 +949,7 @@ onMounted(() => {
 
 .mini-track span {
   display: inline-block;
+  padding-left: 100%;
   color: #00ff41;
   font-size: 0.82rem;
   font-weight: 700;
@@ -784,28 +1120,43 @@ onMounted(() => {
 }
 
 @keyframes player-marquee {
-  0% { transform: translateX(100%); }
+  0% { transform: translateX(0); }
   100% { transform: translateX(-100%); }
 }
 
 @media (max-width: 640px) {
   .mini-player {
-    right: 1rem;
-    bottom: 1rem;
-    width: calc(100vw - 2rem);
-    grid-template-columns: minmax(0, 1fr) 4rem;
-    padding: 0.75rem;
-    gap: 0.75rem;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) 3.75rem;
+    grid-template-areas:
+      "screen cover"
+      "seek seek"
+      "controls controls";
+    padding: 0.65rem;
+    gap: 0.55rem;
+  }
+  .mini-main {
+    display: contents;
   }
   .mini-cover {
-    height: 4rem;
-    width: 4rem;
+    grid-area: cover;
+    height: 3.75rem;
+    width: 3.75rem;
   }
   .mini-screen {
+    grid-area: screen;
     min-height: 2.5rem;
     padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  .mini-seek {
+    grid-area: seek;
   }
   .mini-controls {
+    grid-area: controls;
     gap: 0.25rem;
     flex-wrap: wrap;
     justify-content: space-between;
@@ -820,6 +1171,8 @@ onMounted(() => {
   }
   .mini-volume {
     margin-left: 0;
+    flex: 1 1 auto;
+    justify-content: flex-end;
   }
   .mini-track span {
     font-size: 0.65rem;

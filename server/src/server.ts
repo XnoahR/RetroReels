@@ -8,6 +8,7 @@ import OrderRouter from "./routers/order.router.js";
 import UserPreferencesRouter from "./routers/user-preferences.router.js";
 import CarouselRouter from "./routers/carousel.router.js";
 import CartRouter from "./routers/cart.router.js";
+import SocialRouter from "./routers/social.router.js";
 import { getJwtSecret } from "./utils/auth.util.js";
 
 dotenv.config();
@@ -16,8 +17,8 @@ getJwtSecret();
 const app = express();
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "8mb" }));
+app.use(express.urlencoded({ extended: true, limit: "8mb" }));
 
 app.use("/api/vhs", VhsRouter);
 app.use("/api/auth", AuthRouter);
@@ -26,6 +27,7 @@ app.use("/api/orders", OrderRouter);
 app.use("/api/cart", CartRouter);
 app.use("/api/me", UserPreferencesRouter);
 app.use("/api/carousel", CarouselRouter);
+app.use("/api/social", SocialRouter);
 
 app.use("/vhs", VhsRouter);
 app.use("/auth", AuthRouter);

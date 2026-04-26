@@ -126,6 +126,12 @@
         </div>
 
         <div class="grid grid-cols-1 gap-5 pb-40 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+          <p v-if="isLoadingProducts" class="col-span-full rounded-xl border border-white/5 bg-black/20 p-8 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
+            Loading catalog...
+          </p>
+          <p v-else-if="!filteredProducts.length" class="col-span-full rounded-xl border border-white/5 bg-black/20 p-8 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
+            Catalog is empty. Run the server seed to import products.
+          </p>
           <article
             v-for="product in filteredProducts"
             :key="product.id"
@@ -246,6 +252,36 @@
                   </div>
                 </div>
               </div>
+
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  class="rounded-lg border px-3 py-2 text-xs font-black uppercase tracking-widest transition"
+                  :class="isOwned(product)
+                    ? 'cursor-not-allowed border-white/10 bg-white/5 text-gray-500'
+                    : 'border-serenade-500/40 bg-serenade-500/10 text-serenade-300 hover:bg-serenade-500 hover:text-black'"
+                  :disabled="isOwned(product)"
+                  @click.stop="addToCart(product)"
+                >
+                  {{ isOwned(product) ? 'In Library' : 'Cart' }}
+                </button>
+                <button
+                  v-if="!isOwned(product)"
+                  type="button"
+                  class="rounded-lg bg-serenade-500 px-3 py-2 text-xs font-black uppercase tracking-widest text-black transition hover:bg-serenade-400"
+                  @click.stop="openBuyModal(product)"
+                >
+                  Buy
+                </button>
+                <button
+                  v-else
+                  type="button"
+                  class="rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-xs font-black uppercase tracking-widest text-emerald-200"
+                  @click.stop="router.push({ name: 'Player' })"
+                >
+                  Owned
+                </button>
+              </div>
             </div>
           </article>
         </div>
@@ -264,13 +300,42 @@
         @timeupdate="updateProgress(product.id)"
       ></audio>
     </div>
+
+    <div v-if="cartMessage" class="fixed bottom-6 left-1/2 z-[2147483001] -translate-x-1/2 rounded-lg border border-white/10 bg-black/90 px-5 py-3 text-sm font-bold text-white shadow-2xl">
+      {{ cartMessage }}
+    </div>
+
+    <Teleport to="body">
+      <div v-if="pendingPurchase" class="fixed inset-0 z-[2147483600] grid place-items-center bg-black/75 px-4 backdrop-blur-sm" @click.self="closeBuyModal">
+        <div class="w-full max-w-md rounded-lg border border-white/10 bg-shark-950 p-5 text-white shadow-2xl">
+          <p class="text-xs font-black uppercase tracking-[0.24em] text-serenade-400">Confirm Purchase</p>
+          <h2 class="mt-2 text-2xl font-black">{{ pendingPurchase.title }}</h2>
+          <p class="mt-1 text-sm text-gray-400">{{ pendingPurchase.artist }} / {{ pendingPurchase.format }}</p>
+          <div class="mt-5 rounded border border-white/10 bg-black/35 p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-bold text-gray-400">Price</span>
+              <strong class="text-xl text-serenade-300">${{ pendingPurchase.price }}</strong>
+            </div>
+          </div>
+          <p class="mt-4 text-sm text-gray-300">Buy product?</p>
+          <div class="mt-6 grid grid-cols-2 gap-3">
+            <button class="h-11 rounded border border-white/10 bg-white/5 text-sm font-black uppercase tracking-widest text-gray-300 hover:bg-white/10" @click="closeBuyModal">
+              Cancel
+            </button>
+            <button class="h-11 rounded bg-serenade-500 text-sm font-black uppercase tracking-widest text-black hover:bg-serenade-400" @click="confirmBuy">
+              Buy
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { products } from '@/data/catalogProducts';
+import customFetch from '@/api';
 import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Search, Star } from 'lucide-vue-next';
 import CatalogHighlights from '@/components/catalog/CatalogHighlights.vue';
 import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
@@ -286,8 +351,13 @@ const selectedGenre = ref('All');
 const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
 const sortBy = ref('featured');
 
+const products = ref([]);
+const isLoadingProducts = ref(false);
 const activeProduct = ref(null);
-const currentProductId = ref(1);
+const cartMessage = ref('');
+const ownedProductIds = ref(new Set());
+const pendingPurchase = ref(null);
+const currentProductId = ref('');
 const isCurrentAudioPlaying = ref(false);
 const currentTime = ref(0);
 const volume = ref(0.8);
@@ -304,8 +374,97 @@ const setAudioRef = (el, id) => {
   }
 };
 
+const normalizeProduct = (product) => ({
+  ...product,
+  baseColor: product.vhsDesign?.baseColor || 'bg-zinc-950',
+  borderColor: product.vhsDesign?.borderColor || 'border-zinc-500',
+  discColor: product.vhsDesign?.discColor || 'bg-zinc-300',
+  sideColor: product.vhsDesign?.sideColor || 'bg-zinc-100',
+  audio: product.track?.audioUrl || product.previewUrl || '',
+});
+
+const loadProducts = async () => {
+  isLoadingProducts.value = true;
+
+  try {
+    const { data } = await customFetch.get('products');
+    products.value = (data.data || []).map(normalizeProduct);
+    if (!currentProductId.value && products.value[0]) {
+      currentProductId.value = products.value[0].id;
+    }
+  } catch (error) {
+    showCartMessage(error.response?.data?.message || 'Could not load catalog.');
+  } finally {
+    isLoadingProducts.value = false;
+  }
+};
+
+const loadOwnedProducts = async () => {
+  if (!localStorage.getItem('token')) {
+    ownedProductIds.value = new Set();
+    return;
+  }
+
+  try {
+    const { data } = await customFetch.get('orders');
+    ownedProductIds.value = new Set((data.data || []).map((order) => order.productId));
+  } catch {
+    ownedProductIds.value = new Set();
+  }
+};
+
+const isOwned = (product) => ownedProductIds.value.has(product.id);
+
 const goToProduct = (id) => {
   router.push({ name: 'ProductDetail', params: { id } });
+};
+
+const requireLogin = () => {
+  if (localStorage.getItem('token')) return true;
+  router.push({ name: 'Login' });
+  return false;
+};
+
+const showCartMessage = (message) => {
+  cartMessage.value = message;
+  window.setTimeout(() => {
+    if (cartMessage.value === message) cartMessage.value = '';
+  }, 2400);
+};
+
+const addToCart = async (product) => {
+  if (!requireLogin()) return;
+
+  try {
+    await customFetch.post(`cart/${product.id}`);
+    showCartMessage(`${product.title} added to cart.`);
+  } catch (error) {
+    showCartMessage(error.response?.data?.message || 'Could not add to cart.');
+  }
+};
+
+const openBuyModal = (product) => {
+  if (!requireLogin()) return;
+  pendingPurchase.value = product;
+};
+
+const closeBuyModal = () => {
+  pendingPurchase.value = null;
+};
+
+const confirmBuy = async () => {
+  if (!pendingPurchase.value) return;
+  const product = pendingPurchase.value;
+
+  try {
+    const { data } = await customFetch.post(`orders/buy/${product.id}`);
+    if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+    ownedProductIds.value = new Set([...ownedProductIds.value, product.id]);
+    showCartMessage(`${product.title} purchased.`);
+    closeBuyModal();
+  } catch (error) {
+    showCartMessage(error.response?.data?.message || 'Could not buy this music.');
+  }
 };
 
 const pauseProduct = (id) => {
@@ -420,35 +579,35 @@ const setVolume = (value) => {
   emitPlayerState();
 };
 
-const currentProduct = computed(() => products.find((product) => product.id === currentProductId.value));
+const currentProduct = computed(() => products.value.find((product) => product.id === currentProductId.value));
 
-const genres = computed(() => ['All', ...new Set(products.map((product) => product.genre))]);
-const formats = computed(() => [...new Set(products.map((product) => product.format))]);
+const genres = computed(() => ['All', ...new Set(products.value.map((product) => product.genre).filter(Boolean))]);
+const formats = computed(() => [...new Set(products.value.map((product) => product.format).filter(Boolean))]);
 const highlightGroups = computed(() => [
   {
     title: 'Recommended Music',
     caption: 'Easy starts for the archive mood',
     icon: 'headphones',
-    items: [2, 7, 10, 16].map((id) => products.find((product) => product.id === id)).filter(Boolean),
+    items: products.value.slice(0, 4),
   },
   {
     title: 'Popular Picks',
     caption: 'Highest rated tapes in the shelf',
     icon: 'flame',
-    items: products.filter((product) => product.rating >= 5).slice(0, 5),
+    items: products.value.filter((product) => product.rating >= 5).slice(0, 5),
   },
   {
     title: 'Trending Musics',
     caption: 'Fresh additions from the public folder',
     icon: 'sparkles',
-    items: products.slice(-4).reverse(),
+    items: products.value.slice(-4).reverse(),
   },
 ]);
 
 const filteredProducts = computed(() => {
   const query = search.value.trim().toLowerCase();
 
-  const filtered = products.filter((product) => {
+  const filtered = products.value.filter((product) => {
     const matchesSearch = [product.title, product.artist, product.genre, product.subGenre]
       .filter(Boolean)
       .some((value) => value.toLowerCase().includes(query));
@@ -466,7 +625,8 @@ const filteredProducts = computed(() => {
 });
 
 const emitPlayerState = () => {
-  const product = currentProduct.value || products[0];
+  const product = currentProduct.value || products.value[0];
+  if (!product) return;
 
   emit('player-state', {
     product,
@@ -479,7 +639,9 @@ const emitPlayerState = () => {
   });
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await loadProducts();
+  await loadOwnedProducts();
   emitPlayerState();
 });
 
@@ -703,12 +865,13 @@ const formatTagClass = (format) => {
 .marquee span {
   display: inline-block;
   min-width: 100%;
+  padding-left: 100%;
   animation: marquee 7s linear infinite;
 }
 
 @keyframes marquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0);
   }
 
   100% {

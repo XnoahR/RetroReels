@@ -1,7 +1,13 @@
 <template>
   <HomeLayout>
     <section class="min-h-screen bg-shark-950 pt-24 pb-32 px-4 sm:px-6 lg:px-8 text-white relative overflow-hidden overflow-x-hidden">
-      
+      <div v-if="isLoading" class="mx-auto max-w-3xl rounded-xl border border-white/5 bg-black/30 p-10 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
+        Loading product...
+      </div>
+      <div v-else-if="errorMessage" class="mx-auto max-w-3xl rounded-xl border border-red-400/30 bg-red-500/10 p-10 text-center text-sm font-bold uppercase tracking-widest text-red-200">
+        {{ errorMessage }}
+      </div>
+
       <!-- Stage 1: Intro sliding media -->
       <transition name="slide-intro" appear>
          <div v-if="isAnimatingIn && product" class="fixed z-[100] top-1/2 left-1/2 w-64 h-64 lg:w-96 lg:h-96 pointer-events-none drop-shadow-[0_30px_60px_rgba(0,0,0,0.8)] intro-media">
@@ -129,11 +135,21 @@
 
                  <!-- Bottom Actions -->
                  <div class="flex flex-col sm:flex-row items-center gap-4 pt-8 border-t border-white/10 mt-auto">
-                    <button class="w-full sm:flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border border-serenade-500/50 bg-serenade-500/10 text-serenade-400 font-bold uppercase tracking-widest text-sm hover:bg-serenade-500 hover:text-black transition-colors shadow-[0_0_20px_rgba(245,143,66,0.1)]">
-                       <ShoppingCart class="w-6 h-6" /> Add to Cart
+                    <button
+                      @click="addToCart"
+                      :disabled="isOwned"
+                      class="w-full sm:flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border font-bold uppercase tracking-widest text-sm transition-colors shadow-[0_0_20px_rgba(245,143,66,0.1)]"
+                      :class="isOwned
+                        ? 'cursor-not-allowed border-white/10 bg-white/5 text-gray-500'
+                        : 'border-serenade-500/50 bg-serenade-500/10 text-serenade-400 hover:bg-serenade-500 hover:text-black'"
+                    >
+                       <ShoppingCart class="w-6 h-6" /> {{ isOwned ? 'In Library' : 'Add to Cart' }}
                     </button>
-                    <button class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl bg-serenade-500 text-black font-black uppercase tracking-widest text-sm hover:bg-serenade-400 transition-colors shadow-[0_0_30px_rgba(245,143,66,0.3)] hover:shadow-[0_0_40px_rgba(245,143,66,0.5)]">
+                    <button v-if="!isOwned" @click="openBuyModal" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl bg-serenade-500 text-black font-black uppercase tracking-widest text-sm hover:bg-serenade-400 transition-colors shadow-[0_0_30px_rgba(245,143,66,0.3)] hover:shadow-[0_0_40px_rgba(245,143,66,0.5)]">
                        Buy Now
+                    </button>
+                    <button v-else @click="router.push({ name: 'Player' })" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 font-black uppercase tracking-widest text-sm">
+                       Owned
                     </button>
                  </div>
               </div>
@@ -162,6 +178,31 @@
         </div>
       </transition>
 
+      <Teleport to="body">
+        <div v-if="showBuyModal && product" class="fixed inset-0 z-[2147483600] grid place-items-center bg-black/75 px-4 backdrop-blur-sm" @click.self="showBuyModal = false">
+          <div class="w-full max-w-md rounded-lg border border-white/10 bg-shark-950 p-5 text-white shadow-2xl">
+            <p class="text-xs font-black uppercase tracking-[0.24em] text-serenade-400">Confirm Purchase</p>
+            <h2 class="mt-2 text-2xl font-black">{{ product.title }}</h2>
+            <p class="mt-1 text-sm text-gray-400">{{ product.artist }} / {{ product.format }}</p>
+            <div class="mt-5 rounded border border-white/10 bg-black/35 p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-sm font-bold text-gray-400">Price</span>
+                <strong class="text-xl text-serenade-300">${{ product.price }}</strong>
+              </div>
+            </div>
+            <p class="mt-4 text-sm text-gray-300">Buy product?</p>
+            <div class="mt-6 grid grid-cols-2 gap-3">
+              <button class="h-11 rounded border border-white/10 bg-white/5 text-sm font-black uppercase tracking-widest text-gray-300 hover:bg-white/10" @click="showBuyModal = false">
+                Cancel
+              </button>
+              <button class="h-11 rounded bg-serenade-500 text-sm font-black uppercase tracking-widest text-black hover:bg-serenade-400" @click="buyNow">
+                Buy
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
     </section>
   </HomeLayout>
 </template>
@@ -170,7 +211,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
-import { products } from '@/data/catalogProducts';
+import customFetch from '@/api';
 import { ChevronLeft, Star, ShoppingCart } from 'lucide-vue-next';
 import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
 import VhsTapeBox from '@/components/catalog/media/VhsTapeBox.vue';
@@ -181,17 +222,91 @@ const router = useRouter();
 
 const isAnimatingIn = ref(true);
 const showDetails = ref(false);
+const isLoading = ref(false);
+const errorMessage = ref('');
+const products = ref([]);
+const product = ref(null);
+const ownedProductIds = ref(new Set());
+const showBuyModal = ref(false);
 
-const product = computed(() => {
-  return products.find(p => p.id === Number(route.params.id)) || products[0];
+const normalizeProduct = (item) => ({
+  ...item,
+  baseColor: item.vhsDesign?.baseColor || 'bg-zinc-950',
+  borderColor: item.vhsDesign?.borderColor || 'border-zinc-500',
+  discColor: item.vhsDesign?.discColor || 'bg-zinc-300',
+  sideColor: item.vhsDesign?.sideColor || 'bg-zinc-100',
 });
 
 const recommendations = computed(() => {
-  return products.filter(p => p.id !== product.value.id).sort(() => 0.5 - Math.random()).slice(0, 4);
+  if (!product.value) return [];
+  return products.value.filter(p => p.id !== product.value.id).sort(() => 0.5 - Math.random()).slice(0, 4);
 });
 
 const goToProduct = (id) => {
   router.replace({ name: 'ProductDetail', params: { id } });
+};
+
+const requireLogin = () => {
+  if (localStorage.getItem('token')) return true;
+  router.push({ name: 'Login' });
+  return false;
+};
+
+const loadProduct = async () => {
+  isLoading.value = true;
+  errorMessage.value = '';
+  showDetails.value = false;
+
+  try {
+    const requests = [
+      customFetch.get(`products/${route.params.id}`),
+      customFetch.get('products'),
+    ];
+    if (localStorage.getItem('token')) requests.push(customFetch.get('orders'));
+
+    const [productRes, productsRes, ordersRes] = await Promise.all(requests);
+    product.value = normalizeProduct(productRes.data.data);
+    products.value = (productsRes.data.data || []).map(normalizeProduct);
+    ownedProductIds.value = new Set((ordersRes?.data?.data || []).map((order) => order.productId));
+    triggerAnimation();
+  } catch (error) {
+    product.value = null;
+    errorMessage.value = error.response?.data?.message || 'Product not found';
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const isOwned = computed(() => product.value ? ownedProductIds.value.has(product.value.id) : false);
+
+const addToCart = async () => {
+  if (!product.value || !requireLogin()) return;
+
+  try {
+    await customFetch.post(`cart/${product.value.id}`);
+    errorMessage.value = '';
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message || 'Could not add to cart';
+  }
+};
+
+const openBuyModal = () => {
+  if (!product.value || !requireLogin()) return;
+  showBuyModal.value = true;
+};
+
+const buyNow = async () => {
+  if (!product.value) return;
+
+  try {
+    const { data } = await customFetch.post(`orders/buy/${product.value.id}`);
+    if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+    ownedProductIds.value = new Set([...ownedProductIds.value, product.value.id]);
+    showBuyModal.value = false;
+    router.push({ name: 'Player' });
+  } catch (error) {
+    errorMessage.value = error.response?.data?.message || 'Could not buy this music';
+  }
 };
 
 const triggerAnimation = () => {
@@ -208,12 +323,12 @@ const triggerAnimation = () => {
 
 watch(() => route.params.id, (newId) => {
   if (newId) {
-    triggerAnimation();
+    loadProduct();
   }
 });
 
 onMounted(() => {
-  triggerAnimation();
+  loadProduct();
 });
 </script>
 

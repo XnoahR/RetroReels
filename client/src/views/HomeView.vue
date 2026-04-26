@@ -15,7 +15,14 @@
       <Catalog ref="catalogRef" @player-state="updatePlayerState" />
 
       <Teleport to="body">
-        <aside class="mini-player" aria-label="Audio player">
+        <button v-if="isHomePlayerHidden" type="button" class="mini-show" aria-label="Show audio player" @click="isHomePlayerHidden = false">
+          <Maximize2 class="h-4 w-4" />
+          <span>{{ player.isPlaying ? 'Now Playing' : 'Player' }}</span>
+        </button>
+        <aside v-else class="mini-player" aria-label="Audio player">
+          <button type="button" class="mini-hide" aria-label="Hide audio player" @click="isHomePlayerHidden = true">
+            <Minimize2 class="h-3.5 w-3.5" />
+          </button>
           <div class="mini-main">
             <div class="mini-screen">
               <div class="mini-track">
@@ -80,25 +87,17 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed, reactive, ref } from 'vue';
 import ExclusiveMusic from '@/components/home/ExclusiveMusic.vue';
 import HomeCarousel from '@/components/home/HomeCarousel.vue';
 import Catalog from '@/layouts/Catalog.vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
-import { Pause, Play, Square, Volume2 } from 'lucide-vue-next';
-
-const router = useRouter();
-
-onMounted(() => {
-  if (!localStorage.getItem('token')) {
-    router.push('/');
-  }
-});
+import { Maximize2, Minimize2, Pause, Play, Square, Volume2 } from 'lucide-vue-next';
 
 const catalogRef = ref(null);
 const volumeKnobRef = ref(null);
 const isVolumeDragging = ref(false);
+const isHomePlayerHidden = ref(false);
 const fallbackProduct = {
   id: 1,
   title: 'Retro Reels Player',
@@ -249,6 +248,51 @@ const displayedDuration = computed(() => {
   font-family: "Courier New", monospace;
 }
 
+.mini-hide,
+.mini-show {
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #404040, #2a2a2a);
+  color: #ccc;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.mini-hide:hover,
+.mini-show:hover {
+  border-color: #ff6b35;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.mini-hide {
+  position: absolute;
+  right: 0.55rem;
+  top: 0.55rem;
+  z-index: 2;
+  display: inline-flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.mini-show {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: "Courier New", monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
 .mini-cover {
   display: block;
   height: 7.25rem;
@@ -287,6 +331,7 @@ const displayedDuration = computed(() => {
 
 .mini-track span {
   display: inline-block;
+  padding-left: 100%;
   color: #00ff41;
   font-size: 0.82rem;
   font-weight: 700;
@@ -450,7 +495,7 @@ const displayedDuration = computed(() => {
 
 @keyframes player-marquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0);
   }
 
   100% {
