@@ -1,10 +1,16 @@
 import type { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../utils/db.util.js';
+import { signAuthToken } from '../utils/auth.util.js';
+import type { AuthenticatedRequest } from '../middleware/auth.middleware.js';
 
-const prisma = new PrismaClient();
-const JWT_SECRET = process.env.JWT_SECRET || 'retro_reels_secret_key';
+const toSafeUser = (user: { id: string; name: string | null; email: string; role: string; credits: number }) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  credits: user.credits,
+});
 
 export const register = async (req: Request, res: Response) => {
   try {
@@ -29,20 +35,18 @@ export const register = async (req: Request, res: Response) => {
         name,
         email: normalizedEmail,
         passwordHash,
+        settings: {
+          create: {},
+        },
       },
     });
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+    const token = signAuthToken({ id: user.id, email: user.email, role: user.role });
 
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      user: toSafeUser(user)
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -69,20 +73,41 @@ export const login = async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
+    const token = signAuthToken({ id: user.id, email: user.email, role: user.role });
 
     res.json({
       message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+      user: toSafeUser(user)
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
+};
+
+export const me = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { settings: true },
+  });
+
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  return res.json({
+    user: toSafeUser(user),
+    settings: user.settings,
+  });
+};
+
+export const logout = async (_req: Request, res: Response) => {
+  return res.json({ message: 'Logged out successfully' });
 };
