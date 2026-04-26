@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue';
-import DiscTape from '../components/DiscTape.vue';
-import VynylCassete from '../components/VynylCassete.vue';
-import LoginAudioPlayer from '../components/LoginAudioPlayer.vue';
+import { onMounted, reactive, ref, watch } from 'vue';
+import LoginAudioPlayer from '@/components/auth/LoginAudioPlayer.vue';
+import VynylCassete from '@/components/auth/VynylCassete.vue';
+import DiscTape from '@/components/catalog/media/DiscTape.vue';
 import { Store } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 
@@ -16,14 +16,134 @@ const casseteRef = ref(null)
 const showOverlay = ref(false)
 const playerRef = ref(null)
 
+const copyComputedStyles = (source, target) => {
+    const computed = window.getComputedStyle(source)
+
+    for (const property of computed) {
+        target.style.setProperty(property, computed.getPropertyValue(property), computed.getPropertyPriority(property))
+    }
+
+    target.style.animation = 'none'
+
+    Array.from(source.children).forEach((sourceChild, index) => {
+        copyComputedStyles(sourceChild, target.children[index])
+    })
+}
+
+const createRollingDoor = (sourceVinyl) => {
+    document.querySelector('.route-rolling-door')?.remove()
+
+    if (!document.querySelector('#route-rolling-door-style')) {
+        const style = document.createElement('style')
+        style.id = 'route-rolling-door-style'
+        style.textContent = `
+            .route-rolling-door {
+                position: fixed;
+                inset: 0;
+                z-index: 2147483647;
+                overflow: visible;
+                pointer-events: none;
+                isolation: isolate;
+            }
+
+            .route-rolling-cover {
+                position: fixed;
+                top: 0;
+                /* Start at 0 to cover the whole screen and slide to the right */
+                left: var(--rolling-cover-left, 0px);
+                z-index: 1;
+                height: 100vh;
+                width: 360vw;
+                background: #2a2f35;
+                box-shadow: -24px 0 58px rgba(0, 0, 0, 0.42);
+                will-change: translate;
+            }
+
+            .route-rolling-disc {
+                position: absolute;
+                z-index: 2;
+                transform-origin: center;
+                will-change: transform;
+            }
+        `
+        document.head.appendChild(style)
+    }
+
+    const door = document.createElement('div')
+    const vinylClone = sourceVinyl.cloneNode(true)
+    // Always start the cover from the far left of the screen so it hides the entire loaded scene
+    const coverLeft = 0
+
+    door.className = 'route-rolling-door'
+    door.innerHTML = '<div class="route-rolling-cover"></div>'
+    door.style.setProperty('--rolling-cover-left', `${coverLeft}px`)
+    vinylClone.id = 'route-rolling-vinyl'
+    vinylClone.className = 'route-rolling-disc'
+    copyComputedStyles(sourceVinyl, vinylClone)
+
+    vinylClone.style.position = 'fixed'
+    vinylClone.style.zIndex = '2'
+    vinylClone.style.pointerEvents = 'none'
+    vinylClone.style.willChange = 'transform'
+
+    door.appendChild(vinylClone)
+    document.body.appendChild(door)
+    return door
+}
+
+const rollDoor = (door) => {
+    const disc = door?.querySelector('.route-rolling-disc')
+    const cover = door?.querySelector('.route-rolling-cover')
+    if (!door || !disc) return
+
+    const startTransform = disc.style.transform || window.getComputedStyle(disc).transform || 'none'
+    const duration = 2100
+    const easing = 'cubic-bezier(0.4, 0, 0.2, 1)'
+    const travel = '200vw'
+    const rotation = '190deg'
+
+    cover?.animate(
+        [
+            { translate: '0 0' },
+            { translate: `${travel} 0` },
+        ],
+        {
+            duration,
+            easing,
+            fill: 'forwards',
+        },
+    )
+
+    disc.style.transform = startTransform
+
+    disc.animate(
+        [
+            { translate: '0 0', rotate: '0deg' },
+            { translate: `${travel} 0`, rotate: rotation },
+        ],
+        {
+            duration,
+            easing,
+            fill: 'forwards',
+        },
+    )
+}
+
 const GoToHome = () => {
     if (casseteRef.value && playerRef.value) {
         showOverlay.value = true
         casseteRef.value.triggerExit()
-        playerRef.value.fadeOut(2500)   // 🎶 fade audio 2 detik
+        playerRef.value.fadeOut(1100)
         setTimeout(() => {
-            router.push({ name: 'Home' })
-        }, 3000)
+            const vinyl = document.querySelector('#cassete-vynyl')
+            const door = vinyl ? createRollingDoor(vinyl) : null
+            router.push({ name: 'Home' }).then(() => {
+                requestAnimationFrame(() => {
+                    rollDoor(door)
+                })
+                setTimeout(() => door?.remove(), 1950)
+            })
+        }, 1040)
     }
 }
 
@@ -37,11 +157,89 @@ const previousSong = () => {
 const switchToRegister = (e) => {
     e.preventDefault();
     showRegister.value = true;
+    errorMessage.value = '';
 }
 
 const switchToLogin = (e) => {
     e.preventDefault();
     showRegister.value = false;
+    errorMessage.value = '';
+}
+
+const loginEmail = ref('');
+const loginPassword = ref('');
+const registerName = ref('');
+const registerEmail = ref('');
+const registerPassword = ref('');
+const confirmPassword = ref('');
+const errorMessage = ref('');
+
+// Auto-clear errors when user types
+watch([loginEmail, loginPassword, registerName, registerEmail, registerPassword, confirmPassword], () => {
+    errorMessage.value = '';
+});
+
+const handleLogin = async () => {
+    if (!loginEmail.value || !loginPassword.value) {
+        errorMessage.value = 'User ID and Access Key are required.';
+        return;
+    }
+
+    try {
+        errorMessage.value = '';
+        const res = await fetch('http://localhost:3000/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: loginEmail.value, password: loginPassword.value })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.message || 'Invalid credentials');
+        
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        GoToHome();
+    } catch (err) {
+        errorMessage.value = err.message;
+    }
+}
+
+const handleRegister = async () => {
+    if (!registerName.value) {
+        errorMessage.value = 'Display Name is required.';
+        return;
+    }
+    if (!registerEmail.value || !registerEmail.value.includes('@')) {
+        errorMessage.value = 'Valid User ID (Email) is required.';
+        return;
+    }
+    if (registerPassword.value.length < 6) {
+        errorMessage.value = 'Access Key must be at least 6 characters.';
+        return;
+    }
+    if (registerPassword.value !== confirmPassword.value) {
+        errorMessage.value = 'Access Keys do not match.';
+        return;
+    }
+    
+    try {
+        errorMessage.value = '';
+        
+        const res = await fetch('http://localhost:3000/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: registerName.value, email: registerEmail.value, password: registerPassword.value })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) throw new Error(data.message || 'Registration failed');
+        
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        GoToHome();
+    } catch (err) {
+        errorMessage.value = err.message;
+    }
 }
 
 const songList = reactive([
@@ -145,6 +343,7 @@ const songList = reactive([
                         <p class="text-gray-400 text-sm uppercase tracking-wide">
                             Enter credentials to continue
                         </p>
+                        <p v-if="errorMessage && !showRegister" class="text-red-500 text-xs mt-2 font-bold">{{ errorMessage }}</p>
                     </div>
 
                     <!-- Google Sign In -->
@@ -179,7 +378,7 @@ const songList = reactive([
                     <!-- Email Input -->
                     <div class="mt-6">
                         <label class="retro-label block mb-3" for="LoggingEmailAddress">User ID</label>
-                        <input id="LoggingEmailAddress" class="retro-input block w-full px-4 py-3 rounded-lg"
+                        <input id="LoggingEmailAddress" v-model="loginEmail" class="retro-input block w-full px-4 py-3 rounded-lg"
                             type="email" placeholder="user@terminal.sys" />
                     </div>
 
@@ -189,13 +388,13 @@ const songList = reactive([
                             <label class="retro-label" for="loggingPassword">Access Key</label>
                             <a href="#" class="retro-link">Reset Key?</a>
                         </div>
-                        <input id="loggingPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                        <input id="loggingPassword" v-model="loginPassword" @keyup.enter="handleLogin" class="retro-input block w-full px-4 py-3 rounded-lg"
                             type="password" placeholder="••••••••" />
                     </div>
 
                     <!-- Sign In Button -->
                     <div class="mt-8">
-                        <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
+                        <button @click="handleLogin" class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
                             Initialize Session
                         </button>
                     </div>
@@ -221,39 +420,46 @@ const songList = reactive([
                         <p class="text-gray-400 text-sm uppercase tracking-wide">
                             Create your access credentials
                         </p>
+                        <p v-if="errorMessage && showRegister" class="text-red-500 text-xs mt-2 font-bold">{{ errorMessage }}</p>
                     </div>
 
+                    <!-- Name Input -->
+                    <div class="mt-4">
+                        <label class="retro-label block mb-2" for="registerName">Display Name</label>
+                        <input id="registerName" v-model="registerName" class="retro-input block w-full px-4 py-2 rounded-lg" type="text"
+                            placeholder="Alex Retro" />
+                    </div>
 
                     <!-- Email Input -->
-                    <div class="mt-6">
-                        <label class="retro-label block mb-3" for="registerEmail">User ID</label>
-                        <input id="registerEmail" class="retro-input block w-full px-4 py-3 rounded-lg" type="email"
+                    <div class="mt-4">
+                        <label class="retro-label block mb-2" for="registerEmail">User ID</label>
+                        <input id="registerEmail" v-model="registerEmail" class="retro-input block w-full px-4 py-2 rounded-lg" type="email"
                             placeholder="user@terminal.sys" />
                     </div>
 
                     <!-- Password Input -->
-                    <div class="mt-6">
-                        <label class="retro-label block mb-3" for="registerPassword">Access Key</label>
-                        <input id="registerPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                    <div class="mt-4">
+                        <label class="retro-label block mb-2" for="registerPassword">Access Key</label>
+                        <input id="registerPassword" v-model="registerPassword" class="retro-input block w-full px-4 py-2 rounded-lg"
                             type="password" placeholder="••••••••" />
                     </div>
 
                     <!-- Confirm Password Input -->
-                    <div class="mt-6">
-                        <label class="retro-label block mb-3" for="confirmPassword">Confirm Key</label>
-                        <input id="confirmPassword" class="retro-input block w-full px-4 py-3 rounded-lg"
+                    <div class="mt-4">
+                        <label class="retro-label block mb-2" for="confirmPassword">Confirm Key</label>
+                        <input id="confirmPassword" v-model="confirmPassword" @keyup.enter="handleRegister" class="retro-input block w-full px-4 py-2 rounded-lg"
                             type="password" placeholder="••••••••" />
                     </div>
 
                     <!-- Register Button -->
-                    <div class="mt-8">
-                        <button class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
+                    <div class="mt-6">
+                        <button @click="handleRegister" class="retro-button w-full px-6 py-4 rounded-lg text-sm uppercase tracking-wider">
                             Create Account
                         </button>
                     </div>
 
                     <!-- Back to Login Link -->
-                    <div class="flex items-center justify-between mt-6">
+                    <div class="flex items-center justify-between mt-4">
                         <span class="w-1/5 border-b retro-divider"></span>
                         <a href="#" @click="switchToLogin" class="retro-link text-center">Back to Login</a>
                         <span class="w-1/5 border-b retro-divider"></span>

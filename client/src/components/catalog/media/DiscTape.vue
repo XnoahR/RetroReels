@@ -76,10 +76,10 @@ const titleClass = computed(() => {
   border-style: solid;
   border-radius: 1rem;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -10px 18px rgba(0, 0, 0, 0.28),
-    0 18px 34px rgba(0, 0, 0, 0.36);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    inset 0 2px 4px rgba(255, 255, 255, 0.1),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.4),
+    0 20px 40px -10px rgba(0, 0, 0, 0.6);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
 }
 
 .vhs-shell::before {
@@ -96,8 +96,8 @@ const titleClass = computed(() => {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(110deg, rgba(255, 255, 255, 0.16), transparent 18%, transparent 70%, rgba(255, 255, 255, 0.08)),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 8px);
+    linear-gradient(110deg, rgba(255, 255, 255, 0.15), transparent 25%, transparent 65%, rgba(0, 0, 0, 0.4)),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 8px);
   pointer-events: none;
 }
 
@@ -107,8 +107,10 @@ const titleClass = computed(() => {
   z-index: 1;
   bottom: 22%;
   width: 15%;
-  opacity: 0.92;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.25);
+  opacity: 0.95;
+  box-shadow: 
+    inset 0 0 15px rgba(0, 0, 0, 0.6),
+    0 0 5px rgba(0,0,0,0.5);
 }
 
 .vhs-side-left {
@@ -129,17 +131,12 @@ const titleClass = computed(() => {
   z-index: 2;
   height: 0.55rem;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 -2px 5px rgba(0, 0, 0, 0.4);
 }
 
-.vhs-top-ridge {
-  top: 0.8rem;
-}
-
-.vhs-bottom-ridge {
-  bottom: 0.8rem;
-}
+.vhs-top-ridge { top: 0.8rem; }
+.vhs-bottom-ridge { bottom: 0.8rem; }
 
 .vhs-reel {
   position: absolute;
@@ -151,33 +148,50 @@ const titleClass = computed(() => {
   aspect-ratio: 1 / 1;
   transform: translateY(-50%);
   border-radius: 9999px;
-  border: 3px solid rgba(255, 255, 255, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.3);
   box-shadow:
-    inset 0 0 0 0.5rem rgba(0, 0, 0, 0.18),
-    0 0 12px rgba(0, 0, 0, 0.25);
+    inset 0 0 0 0.5rem rgba(0, 0, 0, 0.3),
+    0 5px 15px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
 
-.vhs-reel-left {
-  left: 11%;
+/* Metallic reflection over the custom Tailwind color */
+.vhs-reel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    transparent 0deg,
+    rgba(255,255,255,0.4) 45deg,
+    transparent 90deg,
+    rgba(255,255,255,0.4) 135deg,
+    transparent 180deg,
+    rgba(255,255,255,0.4) 225deg,
+    transparent 270deg,
+    rgba(255,255,255,0.4) 315deg,
+    transparent 360deg
+  );
+  pointer-events: none;
 }
 
-.vhs-reel-right {
-  right: 11%;
-}
+.vhs-reel-left { left: 11%; }
+.vhs-reel-right { right: 11%; }
 
 .vhs-reel-ring {
   position: absolute;
   inset: 22%;
   border-radius: 9999px;
-  border: 2px dashed rgba(255, 255, 255, 0.72);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
 }
 
 .vhs-reel-core {
-  height: 22%;
-  width: 22%;
+  height: 25%;
+  width: 25%;
   border-radius: 9999px;
-  background: white;
-  box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.2);
+  background: #eaeaea;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 2px 5px rgba(0, 0, 0, 0.4);
+  z-index: 2;
 }
 
 .vhs-window {
@@ -186,18 +200,21 @@ const titleClass = computed(() => {
   right: 28%;
   top: 50%;
   z-index: 2;
-  height: 1.1rem;
+  height: 1.2rem;
   transform: translateY(-50%);
   overflow: hidden;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.85);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.9), 0 1px 0 rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
 }
 
 .vhs-tape-line {
-  height: 100%;
+  height: 80%;
   width: 140%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.26), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
   transform: translateX(-20%);
 }
 
@@ -206,21 +223,21 @@ const titleClass = computed(() => {
   left: 50%;
   top: 50%;
   z-index: 4;
-  width: 38%;
-  height: 50%;
+  width: 40%;
+  height: 54%;
   overflow: hidden;
   transform: translate(-50%, -50%);
-  border-radius: 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.5);
   background-position: center;
   background-size: cover;
-  box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
 }
 
 .vhs-label-shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.45));
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.5));
 }
 
 .vhs-title-strip {
@@ -230,8 +247,10 @@ const titleClass = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-inline: 0.25rem;
+  padding: 0.4rem 0.25rem;
   color: white;
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .vhs-title {
@@ -239,49 +258,31 @@ const titleClass = computed(() => {
   overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-  font-size: 0.62rem;
+  font-size: 0.65rem;
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.1;
   text-align: center;
   text-transform: uppercase;
   overflow-wrap: anywhere;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
-.vhs-title-sm {
-  font-size: 0.52rem;
-}
-
+.vhs-title-sm { font-size: 0.55rem; }
 .vhs-title-xs {
   -webkit-line-clamp: 2;
-  font-size: 0.45rem;
-  line-height: 1.05;
+  font-size: 0.48rem;
 }
 
-.spin-left {
-  animation: spin-left 5s linear infinite;
-}
-
-.spin-right {
-  animation: spin-right 5s linear infinite;
-}
+.spin-left { animation: spin-left 5s linear infinite; }
+.spin-right { animation: spin-right 5s linear infinite; }
 
 @keyframes spin-left {
-  from {
-    transform: translateY(-50%) rotate(0deg);
-  }
-
-  to {
-    transform: translateY(-50%) rotate(360deg);
-  }
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(360deg); }
 }
 
 @keyframes spin-right {
-  from {
-    transform: translateY(-50%) rotate(0deg);
-  }
-
-  to {
-    transform: translateY(-50%) rotate(-360deg);
-  }
+  from { transform: translateY(-50%) rotate(0deg); }
+  to { transform: translateY(-50%) rotate(-360deg); }
 }
 </style>

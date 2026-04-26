@@ -1,23 +1,17 @@
 <template>
   <div class="vinyl-stage" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-    <div
-      class="vinyl-record"
-      :class="{
-        'vinyl-record-hovering': hoverState === 'hovering',
-        'vinyl-record-leaving': hoverState === 'leaving',
-      }"
-    >
+    <div ref="vinylRef" class="vinyl-record">
       <div class="vinyl-disc" :class="{ 'vinyl-disc-active': active }">
         <div class="vinyl-groove vinyl-groove-1"></div>
         <div class="vinyl-groove vinyl-groove-2"></div>
-        <div class="vinyl-label" :style="{ backgroundImage: `url(${image})` }">
+        <div class="vinyl-label" :style="{ backgroundImage: `url('${safeCoverImage}')` }">
           <span></span>
         </div>
       </div>
     </div>
 
-    <div class="album-cover">
-      <img :src="image" :alt="`${title} album cover`" />
+    <div class="album-cover" :style="coverStyle">
+      <img :src="coverImage" :alt="`${title} album cover`" @error="handleImageError" />
       <div class="album-shine"></div>
       <div class="album-copy">
         <p :class="titleClass">{{ title }}</p>
@@ -37,25 +31,56 @@ const props = defineProps({
   active: { type: Boolean, default: false },
 });
 
+const fallbackImage = '/RR.png';
+const imageFailed = ref(false);
+const coverImage = computed(() => (imageFailed.value ? fallbackImage : props.image));
+const safeCoverImage = computed(() => coverImage.value.replace(/'/g, "\\'"));
+
+const handleImageError = () => {
+  imageFailed.value = true;
+};
+
 const titleClass = computed(() => {
   if (props.title.length > 32) return 'cover-title cover-title-xs';
   if (props.title.length > 22) return 'cover-title cover-title-sm';
   return 'cover-title';
 });
 
-const hoverState = ref('idle');
-let leaveTimer;
+const vinylRef = ref(null);
+const isHovering = ref(false);
+let animation = null;
+
+const coverStyle = computed(() => ({
+  transform: isHovering.value ? 'translateX(-0.5rem)' : 'translateX(0)',
+}));
 
 const handleMouseEnter = () => {
-  window.clearTimeout(leaveTimer);
-  hoverState.value = 'hovering';
+  isHovering.value = true;
+  if (!vinylRef.value) return;
+
+  if (!animation) {
+    animation = vinylRef.value.animate([
+      { zIndex: 1, transform: 'translateX(2.5rem) rotate(0deg)' },
+      { zIndex: 1, transform: 'translateX(5.8rem) rotate(18deg)', offset: 0.5 },
+      { zIndex: 3, transform: 'translateX(5.8rem) rotate(18deg)', offset: 0.51 },
+      { zIndex: 3, transform: 'translateX(3.7rem) rotate(24deg)' }
+    ], {
+      duration: 600,
+      easing: 'ease-in-out',
+      fill: 'forwards'
+    });
+  } else {
+    animation.playbackRate = 1;
+    animation.play();
+  }
 };
 
 const handleMouseLeave = () => {
-  hoverState.value = 'leaving';
-  leaveTimer = window.setTimeout(() => {
-    hoverState.value = 'idle';
-  }, 620);
+  isHovering.value = false;
+  if (animation) {
+    animation.playbackRate = -1;
+    animation.play();
+  }
 };
 </script>
 
@@ -78,6 +103,7 @@ const handleMouseLeave = () => {
   border: 1px solid rgba(255, 255, 255, 0.35);
   background: #111;
   box-shadow: 0 22px 45px rgba(0, 0, 0, 0.5);
+  transition: transform 0.4s ease-out;
 }
 
 .album-cover img {
@@ -96,8 +122,10 @@ const handleMouseLeave = () => {
   position: absolute;
   inset-x: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
-  padding: 2.75rem 0.75rem 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), rgba(0, 0, 0, 0.6) 66%, transparent);
+  padding: 1.6rem 0.75rem 0.65rem;
   color: white;
 }
 
@@ -153,19 +181,21 @@ const handleMouseLeave = () => {
   width: 100%;
   place-items: center;
   border-radius: 9999px;
-  background:
-    radial-gradient(circle at center, #181818 0 10%, #050505 11% 34%, #191919 35% 36%, #050505 37% 100%);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
-}
-
-.vinyl-record-hovering {
-  z-index: 3;
-  animation: vinyl-hover-out 0.62s ease forwards;
-}
-
-.vinyl-record-leaving {
-  z-index: 3;
-  animation: vinyl-hover-back 0.62s ease forwards;
+  background: conic-gradient(
+    #0f0f0f 0deg,
+    #4a4a4a 45deg,
+    #0f0f0f 90deg,
+    #4a4a4a 135deg,
+    #0f0f0f 180deg,
+    #4a4a4a 225deg,
+    #0f0f0f 270deg,
+    #4a4a4a 315deg,
+    #0f0f0f 360deg
+  );
+  box-shadow: 
+    inset 0 0 10px rgba(0, 0, 0, 1),
+    0 15px 35px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .vinyl-disc-active {
@@ -175,7 +205,8 @@ const handleMouseLeave = () => {
 .vinyl-groove {
   position: absolute;
   border-radius: 9999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.8), 0 0 2px rgba(255,255,255,0.05);
 }
 
 .vinyl-groove-1 {
@@ -208,50 +239,6 @@ const handleMouseLeave = () => {
 @keyframes vinyl-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes vinyl-hover-out {
-  0% {
-    z-index: 1;
-    transform: translateX(2.5rem) rotate(0deg);
-  }
-
-  52% {
-    z-index: 1;
-    transform: translateX(5.8rem) rotate(18deg);
-  }
-
-  53% {
-    z-index: 3;
-    transform: translateX(5.8rem) rotate(18deg);
-  }
-
-  100% {
-    z-index: 3;
-    transform: translateX(3.7rem) rotate(24deg);
-  }
-}
-
-@keyframes vinyl-hover-back {
-  0% {
-    z-index: 3;
-    transform: translateX(3.7rem) rotate(24deg);
-  }
-
-  48% {
-    z-index: 3;
-    transform: translateX(5.8rem) rotate(18deg);
-  }
-
-  49% {
-    z-index: 1;
-    transform: translateX(5.8rem) rotate(18deg);
-  }
-
-  100% {
-    z-index: 1;
-    transform: translateX(2.5rem) rotate(0deg);
   }
 }
 </style>

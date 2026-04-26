@@ -1,5 +1,7 @@
 <template>
   <section class="relative flex min-h-[calc(100vh-4rem)] flex-col bg-shark-950 text-white">
+    <CatalogHighlights :groups="highlightGroups" :active-product-id="activeProduct" @select="togglePreview" />
+
     <div class="border-b border-white/10 bg-shark-950/95 px-4 py-5 sm:px-6 lg:sticky lg:top-16 lg:z-30">
       <div>
         <p class="text-tiny font-semibold uppercase tracking-[0.24em] text-serenade-300">Now browsing</p>
@@ -11,39 +13,41 @@
       <Transition name="filter-panel">
         <aside
           v-if="showFilters"
-          class="relative border-b border-white/10 bg-black/35 p-4 lg:sticky lg:top-[8.25rem] lg:h-[calc(100vh-8.25rem)] lg:w-1/4 lg:min-w-72 lg:border-b-0 lg:border-r lg:p-6"
+          class="relative max-h-[calc(100vh-5rem)] overflow-hidden border-b border-white/5 bg-white/[0.015] backdrop-blur-2xl p-4 lg:sticky lg:top-[8.25rem] lg:h-[calc(100vh-8.25rem)] lg:max-h-none lg:w-1/4 lg:min-w-72 lg:border-b-0 lg:border-r lg:p-6 shadow-[10px_0_30px_-15px_rgba(0,0,0,0.5)]"
         >
           <button
             type="button"
-            class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/10 text-gray-300 transition hover:border-serenade-300 hover:text-serenade-200"
+            class="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-black/40 text-gray-400 transition hover:border-serenade-500/50 hover:bg-serenade-500/10 hover:text-serenade-300 hover:shadow-[0_0_15px_rgba(242,112,29,0.3)]"
             aria-label="Hide filters"
             @click="showFilters = false"
           >
             <ChevronLeft class="h-4 w-4" />
           </button>
 
-          <div class="space-y-6 pr-8">
-            <div class="relative">
-              <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-serenade-200" />
+          <div class="filter-scroll max-h-[calc(100vh-7rem)] space-y-8 overflow-y-auto pr-8 lg:h-full lg:max-h-none lg:pb-8">
+            <div class="relative group/search">
+              <Search class="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 transition group-focus-within/search:text-serenade-400" />
               <input
                 v-model="search"
                 type="search"
-                class="h-11 w-full rounded-md border border-white/10 bg-shark-900 pl-10 pr-3 text-sm text-white outline-none transition placeholder:text-gray-500 focus:border-serenade-300 focus:ring-2 focus:ring-serenade-400/20"
-                placeholder="Search artist or title"
+                class="h-12 w-full rounded-2xl border border-white/10 bg-black/20 pl-11 pr-4 text-sm text-white shadow-inner outline-none transition placeholder:text-gray-600 focus:border-serenade-500/50 focus:bg-black/40 focus:ring-4 focus:ring-serenade-500/10"
+                placeholder="Search artist or title..."
               />
             </div>
 
             <div>
-              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">Genre</p>
+              <p class="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
+                <span class="h-px w-4 bg-gray-700"></span> Genre
+              </p>
               <div class="grid grid-cols-2 gap-2 lg:grid-cols-1">
                 <button
                   v-for="genre in genres"
                   :key="genre"
                   type="button"
-                  class="rounded-md border px-3 py-2 text-left text-sm transition"
+                  class="rounded-xl border px-4 py-2.5 text-left text-sm font-medium transition-all"
                   :class="selectedGenre === genre
-                    ? 'border-serenade-300 bg-serenade-500/20 text-serenade-100'
-                    : 'border-white/10 bg-white/5 text-gray-300 hover:border-white/25 hover:text-white'"
+                    ? 'border-serenade-500/50 bg-serenade-500/20 text-serenade-300 shadow-[0_0_20px_rgba(242,112,29,0.15)]'
+                    : 'border-white/5 bg-black/20 text-gray-400 hover:border-white/20 hover:bg-white/[0.04] hover:text-white'"
                   @click="selectedGenre = genre"
                 >
                   {{ genre }}
@@ -52,15 +56,23 @@
             </div>
 
             <div>
-              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-gray-400">Format</p>
-              <div class="space-y-2">
+              <p class="mb-4 text-xs font-bold uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
+                <span class="h-px w-4 bg-gray-700"></span> Format
+              </p>
+              <div class="space-y-3">
                 <label
                   v-for="format in formats"
                   :key="format"
-                  class="flex cursor-pointer items-center justify-between rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-gray-300"
+                  class="flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-all"
+                  :class="selectedFormats.includes(format) 
+                    ? 'border-serenade-500/40 bg-serenade-500/10 text-white shadow-[0_0_15px_rgba(242,112,29,0.1)]' 
+                    : 'border-white/5 bg-black/20 text-gray-400 hover:border-white/20 hover:bg-white/[0.04] hover:text-white'"
                 >
                   <span>{{ format }}</span>
-                  <input v-model="selectedFormats" :value="format" type="checkbox" class="h-4 w-4 accent-serenade-500" />
+                  <div class="relative flex h-5 w-9 items-center rounded-full transition-colors" :class="selectedFormats.includes(format) ? 'bg-serenade-500' : 'bg-gray-700'">
+                    <span class="absolute h-4 w-4 rounded-full bg-white transition-transform" :class="selectedFormats.includes(format) ? 'translate-x-4 shadow-[0_0_8px_rgba(0,0,0,0.5)]' : 'translate-x-0.5'"></span>
+                  </div>
+                  <input v-model="selectedFormats" :value="format" type="checkbox" class="hidden" />
                 </label>
               </div>
             </div>
@@ -72,7 +84,7 @@
         <button
           v-if="!showFilters"
           type="button"
-          class="sticky top-[8.25rem] z-20 hidden h-[calc(100vh-8.25rem)] w-12 shrink-0 items-start justify-center border-r border-white/10 bg-black/35 pt-6 text-gray-300 transition hover:bg-black/50 hover:text-serenade-200 lg:flex"
+          class="sticky top-[8.25rem] z-20 hidden h-[calc(100vh-8.25rem)] w-12 shrink-0 items-start justify-center border-r border-white/5 bg-white/[0.015] backdrop-blur-2xl pt-6 text-gray-500 transition hover:bg-white/[0.04] hover:text-serenade-300 lg:flex shadow-[10px_0_30px_-15px_rgba(0,0,0,0.3)]"
           aria-label="Show filters"
           @click="showFilters = true"
         >
@@ -84,48 +96,69 @@
         <button
           v-if="!showFilters"
           type="button"
-          class="m-4 inline-flex h-10 items-center gap-2 rounded-md border border-white/10 bg-white/10 px-3 text-sm text-gray-200 lg:hidden"
+          class="m-4 inline-flex h-11 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-md px-4 font-medium text-sm text-gray-300 shadow-lg lg:hidden hover:bg-white/[0.06]"
           @click="showFilters = true"
         >
-          <ChevronRight class="h-4 w-4" />
-          Filters
+          <ChevronRight class="h-4 w-4 text-serenade-400" />
+          Show Filters
         </button>
       </Transition>
 
-      <main class="flex-1 px-4 py-5 sm:px-6">
-        <div class="mb-5 flex items-center justify-between gap-3">
-          <div class="flex items-center gap-2 text-sm text-gray-400">
-            <LayoutGrid class="h-4 w-4 text-serenade-300" />
-            <span>{{ filteredProducts.length }} tapes found</span>
+      <main class="flex-1 px-4 py-5 sm:px-6 lg:pl-10">
+        <div class="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-md px-5 py-4 shadow-lg">
+          <div class="flex items-center gap-3 text-sm font-medium text-gray-400">
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-serenade-500/10 border border-serenade-500/20 shadow-[0_0_15px_rgba(242,112,29,0.15)]">
+              <LayoutGrid class="h-4 w-4 text-serenade-400" />
+            </div>
+            <span><strong class="text-white">{{ filteredProducts.length }}</strong> tapes in archive</span>
           </div>
-          <select
-            v-model="sortBy"
-            class="h-10 rounded-md border border-white/10 bg-shark-900 px-3 text-sm text-white outline-none focus:border-serenade-300"
-          >
-            <option value="featured">Featured</option>
-            <option value="price-low">Price low</option>
-            <option value="price-high">Price high</option>
-          </select>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-500">Sort By</span>
+            <select
+              v-model="sortBy"
+              class="h-10 rounded-xl border border-white/10 bg-black/40 px-4 text-sm font-medium text-white shadow-inner outline-none transition focus:border-serenade-500 focus:bg-black hover:border-white/20"
+            >
+              <option value="featured">Featured</option>
+              <option value="price-low">Price Low to High</option>
+              <option value="price-high">Price High to Low</option>
+            </select>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 gap-5 pb-40 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <article
             v-for="product in filteredProducts"
             :key="product.id"
-            class="group overflow-hidden rounded-lg border border-white/10 bg-[#171b20] shadow-xl shadow-black/20 transition hover:-translate-y-1 hover:border-serenade-300/70"
-            :class="activeProduct === product.id ? 'is-playing border-serenade-300 shadow-[0_0_28px_rgba(242,112,29,0.32)] ring-1 ring-serenade-300/50' : ''"
+            class="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] shadow-2xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:border-white/10 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] cursor-pointer"
+            :class="activeProduct === product.id ? 'is-playing border-serenade-400/50 shadow-[0_0_30px_rgba(242,112,29,0.2)]' : ''"
+            @click="goToProduct(product.id)"
           >
-            <div class="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-shark-800 via-black to-shark-900">
-              <div class="absolute left-4 top-4 rounded bg-black/45 px-2 py-1 text-tiny font-bold uppercase tracking-[0.2em] text-serenade-200">
-                {{ product.format }}
+            <!-- Media Stage -->
+            <div class="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-shark-900 to-black">
+              <!-- Ambient Aura -->
+              <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-serenade-500/10 rounded-full blur-[70px] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:bg-serenade-500/20 z-0"></div>
+              
+              <!-- Grid Background -->
+              <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:1rem_1rem] opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_50%,transparent_90%)] z-0"></div>
+              <!-- Vignette -->
+              <div class="absolute inset-0 shadow-[inset_0_0_80px_rgba(0,0,0,0.9)] z-10 pointer-events-none"></div>
+              
+              <!-- Badges -->
+              <div class="absolute left-4 top-4 z-20 flex items-center gap-2">
+                <span class="rounded-full border border-white/10 bg-black/40 px-3 py-1 text-tiny font-bold uppercase tracking-[0.2em] text-white/80 backdrop-blur-md">
+                  {{ product.format }}
+                </span>
               </div>
+              
               <div
                 v-if="activeProduct === product.id"
-                class="absolute right-4 top-4 z-20 flex items-center gap-2 rounded bg-serenade-500 px-2 py-1 text-tiny font-black uppercase tracking-[0.18em] text-white shadow-[0_0_18px_rgba(242,112,29,0.45)]"
+                class="absolute right-4 top-4 z-20 flex items-center gap-2 rounded-full border border-serenade-500/30 bg-serenade-500/20 px-3 py-1 text-tiny font-black uppercase tracking-[0.18em] text-serenade-300 shadow-[0_0_15px_rgba(242,112,29,0.3)] backdrop-blur-md"
               >
-                <span class="h-1.5 w-1.5 rounded-full bg-white"></span>
+                <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-serenade-400 shadow-[0_0_8px_rgba(242,112,29,0.8)]"></span>
                 Playing
               </div>
+
+              <!-- Media Components -->
               <VinylAlbum
                 v-if="product.format === 'Vinyl'"
                 :title="product.title"
@@ -154,60 +187,63 @@
               />
             </div>
 
-            <div class="space-y-3 p-4">
-              <audio
-                :ref="(el) => setAudioRef(el, product.id)"
-                :src="product.audio"
-                preload="metadata"
-                @ended="handleAudioEnded(product.id)"
-                @timeupdate="updateProgress(product.id)"
-              ></audio>
-
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <h3 class="card-title text-base font-bold leading-tight text-white">{{ product.title }}</h3>
-                  <p class="truncate text-sm text-gray-400">{{ product.artist }}</p>
+            <!-- Content -->
+            <div class="relative z-10 space-y-4 p-5">
+              <!-- Header: Title, Artist & Price -->
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <p class="mb-1 truncate text-xs font-bold uppercase tracking-[0.2em] text-gray-500">{{ product.artist }}</p>
+                  <h3 class="card-title text-lg font-black leading-tight tracking-tight text-white drop-shadow-md">{{ product.title }}</h3>
                 </div>
-                <span class="shrink-0 rounded-md bg-serenade-500 px-2 py-1 text-xs font-bold text-white">
-                  ${{ product.price }}
+                <div class="shrink-0 rounded-xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 px-3 py-1.5 shadow-lg backdrop-blur-md">
+                  <span class="text-sm font-black text-white">${{ product.price }}</span>
+                </div>
+              </div>
+
+              <!-- Tags and Rating -->
+              <div class="flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.16em]">
+                <span class="neon-tag" :class="genreTagClass(product.genre)">
+                  {{ product.genre }}
+                  <span v-if="product.subGenre" class="tag-sub">/ {{ product.subGenre }}</span>
                 </span>
-              </div>
-
-              <div class="flex items-center justify-between gap-2 text-xs uppercase tracking-[0.16em]">
-                <span class="neon-tag" :class="genreTagClass(product.genre)">{{ product.genre }}</span>
-                <span class="neon-tag" :class="formatTagClass(product.format)">{{ product.format }}</span>
-              </div>
-
-              <div class="flex items-center justify-between gap-3">
-                <div class="flex items-center gap-1 text-serenade-300">
-                  <Star v-for="star in product.rating" :key="star" class="h-3.5 w-3.5 fill-current" />
+                <div class="ml-auto flex items-center gap-1 text-serenade-400">
+                  <Star v-for="star in product.rating" :key="star" class="h-3.5 w-3.5 fill-current drop-shadow-[0_0_4px_rgba(242,112,29,0.5)]" />
                 </div>
+              </div>
+
+              <!-- Player Controls -->
+              <div class="mt-2 flex items-center gap-3 rounded-xl border border-white/5 bg-black/40 p-2 shadow-inner">
                 <button
                   type="button"
-                  class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-serenade-500 text-white transition hover:bg-serenade-400"
+                  class="group/play relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-serenade-500/50 bg-serenade-500/10 text-serenade-400 transition-all hover:scale-105 hover:bg-serenade-500 hover:text-white hover:shadow-[0_0_20px_rgba(242,112,29,0.4)]"
                   :aria-label="`Play ${product.title}`"
-                  @click="togglePreview(product)"
+                  @click.stop="togglePreview(product)"
                 >
                   <Pause v-if="activeProduct === product.id" class="h-4 w-4 fill-current" />
                   <Play v-else class="ml-0.5 h-4 w-4 fill-current" />
                 </button>
-              </div>
-
-              <div class="rounded-md border border-white/10 bg-black/30 p-2">
-                <div class="mb-2 flex items-center justify-between text-tiny uppercase tracking-[0.18em] text-gray-500">
-                  <div class="min-w-0 flex-1 overflow-hidden">
-                    <div v-if="activeProduct === product.id" class="marquee text-serenade-200">
-                      <span>Currently Playing - {{ product.artist }} - {{ product.title }}</span>
+                
+                <div class="min-w-0 flex-1 pr-2">
+                  <div class="mb-1.5 flex items-center justify-between text-[0.65rem] font-bold uppercase tracking-[0.2em] text-gray-500">
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                      <div v-if="activeProduct === product.id" class="marquee text-serenade-300 drop-shadow-[0_0_2px_rgba(242,112,29,0.8)]">
+                        <span>NOW PLAYING</span>
+                      </div>
+                      <span v-else>PREVIEW</span>
                     </div>
-                    <span v-else>Preview</span>
+                    <span>{{ product.duration }}</span>
                   </div>
-                  <span>{{ product.duration }}</span>
-                </div>
-                <div class="h-1.5 overflow-hidden rounded-full bg-white/10">
-                  <div
-                    class="h-full rounded-full bg-serenade-400 transition-all"
-                    :style="{ width: `${progressById[product.id] || 0}%` }"
-                  ></div>
+                  <div class="relative h-1.5 overflow-hidden rounded-full bg-white/10 shadow-inner">
+                    <div
+                      class="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-serenade-600 to-amber-300 transition-all duration-300"
+                      :style="{ width: `${progressById[product.id] || 0}%` }"
+                    ></div>
+                    <div
+                      v-if="activeProduct === product.id"
+                      class="absolute inset-y-0 left-0 bg-white/20 blur-[2px] transition-all duration-300"
+                      :style="{ width: `${progressById[product.id] || 0}%` }"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -216,32 +252,60 @@
       </main>
     </div>
 
+    <div class="hidden" aria-hidden="true">
+      <audio
+        v-for="product in products"
+        :key="`audio-${product.id}`"
+        :ref="(el) => setAudioRef(el, product.id)"
+        :src="product.audio"
+        preload="metadata"
+        @ended="handleAudioEnded(product.id)"
+        @loadedmetadata="handleAudioLoaded(product.id)"
+        @timeupdate="updateProgress(product.id)"
+      ></audio>
+    </div>
   </section>
 </template>
 
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { products } from '@/data/catalogProducts';
 import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Search, Star } from 'lucide-vue-next';
-import CassetteTape from '../components/CassetteTape.vue';
-import VhsTapeBox from '../components/VhsTapeBox.vue';
-import VinylAlbum from '../components/VinylAlbum.vue';
+import CatalogHighlights from '@/components/catalog/CatalogHighlights.vue';
+import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
+import VhsTapeBox from '@/components/catalog/media/VhsTapeBox.vue';
+import VinylAlbum from '@/components/catalog/media/VinylAlbum.vue';
 
 const emit = defineEmits(['player-state']);
+const router = useRouter();
 
 const showFilters = ref(true);
 const search = ref('');
 const selectedGenre = ref('All');
 const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
 const sortBy = ref('featured');
+
 const activeProduct = ref(null);
 const currentProductId = ref(1);
 const isCurrentAudioPlaying = ref(false);
 const currentTime = ref(0);
+const volume = ref(0.8);
 const audioById = new Map();
 const progressById = reactive({});
+const durationById = reactive({});
 
 const setAudioRef = (el, id) => {
-  if (el) audioById.set(id, el);
+  if (el) {
+    el.volume = volume.value;
+    audioById.set(id, el);
+  } else {
+    audioById.delete(id);
+  }
+};
+
+const goToProduct = (id) => {
+  router.push({ name: 'ProductDetail', params: { id } });
 };
 
 const pauseProduct = (id) => {
@@ -257,6 +321,7 @@ const togglePreview = async (product) => {
 
   const audio = audioById.get(product.id);
   if (!audio) return;
+  audio.volume = volume.value;
 
   if (activeProduct.value === product.id) {
     audio.pause();
@@ -311,10 +376,19 @@ const handleAudioEnded = (id) => {
   emitPlayerState();
 };
 
+const handleAudioLoaded = (id) => {
+  const audio = audioById.get(id);
+  if (!audio || !Number.isFinite(audio.duration)) return;
+
+  durationById[id] = audio.duration;
+  emitPlayerState();
+};
+
 const updateProgress = (id) => {
   const audio = audioById.get(id);
   if (!audio || !audio.duration) return;
 
+  durationById[id] = audio.duration;
   progressById[id] = Math.min(100, (audio.currentTime / audio.duration) * 100);
   if (currentProductId.value === id) {
     currentTime.value = audio.currentTime;
@@ -323,307 +397,61 @@ const updateProgress = (id) => {
   }
 };
 
-const currentProduct = computed(() => products.find((product) => product.id === currentProductId.value));
+const seekCurrent = (progress) => {
+  const audio = audioById.get(currentProductId.value);
+  const nextProgress = Number(progress);
 
-const products = [
-  {
-    id: 1,
-    title: 'Moechakka Fire',
-    artist: 'Ellen Joe',
-    genre: 'J-Pop',
-    format: 'VHS',
-    price: 22,
-    rating: 5,
-    duration: '2:48',
-    audio: '/music/【ゼンゼロ】モエチャッカファイア   エレン・ジョー（CV：若山詩音）cover - 128.mp3',
-    image: '/ejm3.jpg',
-    baseColor: 'bg-black',
-    borderColor: 'border-white',
-    discColor: 'bg-red-500',
-    sideColor: 'bg-gray-500',
-  },
-  {
-    id: 2,
-    title: 'Put Your Head on My Shoulder',
-    artist: 'Hu Tao',
-    genre: 'Lo-fi',
-    format: 'Cassette',
-    price: 18,
-    rating: 4,
-    duration: '3:12',
-    audio: '/music/Hu Tao - Put Your Head on My Shoulder.mp3',
-    image: '/ht.png',
-    baseColor: 'bg-red-800',
-    borderColor: 'border-red-400',
-    discColor: 'bg-red-300',
-    sideColor: 'bg-red-100',
-  },
-  {
-    id: 3,
-    title: 'Liquid-Formed Sadness',
-    artist: 'Lime',
-    genre: 'City Pop',
-    format: 'VHS',
-    price: 26,
-    rating: 5,
-    duration: '3:40',
-    audio: '/music/ChiliChill - My Sadness is Liquid-Formed  Japanese Cover - 128.mp3',
-    image: '/pasan.jpg',
-    baseColor: 'bg-purple-800',
-    borderColor: 'border-purple-400',
-    discColor: 'bg-purple-300',
-    sideColor: 'bg-purple-100',
-  },
-  {
-    id: 4,
-    title: "I Can't Stop The Loneliness",
-    artist: 'ANRI',
-    genre: 'City Pop',
-    format: 'Vinyl',
-    price: 32,
-    rating: 5,
-    duration: '4:18',
-    audio: "/music/ANRI - I Can't Stop The Loneliness - 128-1.mp3",
-    image: '/her.jpg',
-    baseColor: 'bg-sky-800',
-    borderColor: 'border-sky-400',
-    discColor: 'bg-sky-300',
-    sideColor: 'bg-sky-100',
-  },
-  {
-    id: 5,
-    title: 'Wanderlust',
-    artist: 'Metric',
-    genre: 'Indie',
-    format: 'Cassette',
-    price: 20,
-    rating: 4,
-    duration: '3:31',
-    audio: '/music/[Metric] - Wanderlust - 128.mp3',
-    image: '/skizo.jpg',
-    baseColor: 'bg-gray-800',
-    borderColor: 'border-gray-400',
-    discColor: 'bg-black',
-    sideColor: 'bg-gray-100',
-  },
-  {
-    id: 6,
-    title: 'Yoru Tape',
-    artist: 'Night Archive',
-    genre: 'Lo-fi',
-    format: 'VHS',
-    price: 16,
-    rating: 4,
-    duration: '2:56',
-    audio: '/music/Hu Tao - Put Your Head on My Shoulder.mp3',
-    image: '/Yoru.jpeg',
-    baseColor: 'bg-bay-leaf-900',
-    borderColor: 'border-bay-leaf-300',
-    discColor: 'bg-bay-leaf-500',
-    sideColor: 'bg-bay-leaf-700',
-  },
-  {
-    id: 7,
-    title: "It's You",
-    artist: 'Hu Tao',
-    genre: 'Dream Pop',
-    format: 'Vinyl',
-    price: 30,
-    rating: 5,
-    duration: '3:34',
-    audio: "/music/Ali Gatie - It's You  cover by Hu Tao (AI Cover) - 128.mp3",
-    image: '/download (1).jpeg',
-    baseColor: 'bg-rose-950',
-    borderColor: 'border-rose-300',
-    discColor: 'bg-rose-400',
-    sideColor: 'bg-pink-100',
-  },
-  {
-    id: 8,
-    title: 'As The World Caves In',
-    artist: 'Hu Tao',
-    genre: 'Ballad',
-    format: 'VHS',
-    price: 24,
-    rating: 5,
-    duration: '3:38',
-    audio: '/music/As The World Caves In - Matt Maltese - Cover Hu Tao - Sub Español - 256.mp3',
-    image: '/download (11).jpg',
-    baseColor: 'bg-zinc-950',
-    borderColor: 'border-red-300',
-    discColor: 'bg-red-400',
-    sideColor: 'bg-stone-200',
-  },
-  {
-    id: 9,
-    title: 'Falling',
-    artist: 'Hu Tao',
-    genre: 'Ballad',
-    format: 'Cassette',
-    price: 21,
-    rating: 4,
-    duration: '3:57',
-    audio: '/music/Harry Styles - Falling cover by Hu Tao (AI Cover).mp3',
-    image: '/htlast.jpg',
-    baseColor: 'bg-orange-950',
-    borderColor: 'border-orange-300',
-    discColor: 'bg-amber-300',
-    sideColor: 'bg-orange-100',
-  },
-  {
-    id: 10,
-    title: '505',
-    artist: 'Hu Tao',
-    genre: 'Alt Rock',
-    format: 'Vinyl',
-    price: 28,
-    rating: 5,
-    duration: '4:13',
-    audio: '/music/hu tao - 505 (voice ai) - 128.mp3',
-    image: '/kyomoto.jpg',
-    baseColor: 'bg-slate-950',
-    borderColor: 'border-emerald-300',
-    discColor: 'bg-emerald-400',
-    sideColor: 'bg-slate-200',
-  },
-  {
-    id: 11,
-    title: 'Kukatakan Dengan Indah',
-    artist: 'Hu Tao',
-    genre: 'Indo Pop',
-    format: 'VHS',
-    price: 23,
-    rating: 4,
-    duration: '4:45',
-    audio: '/music/Hu Tao - Kukatakan Dengan Indah (Ai Cover) - 128.mp3',
-    image: '/oguri.jpeg',
-    baseColor: 'bg-teal-950',
-    borderColor: 'border-teal-300',
-    discColor: 'bg-cyan-300',
-    sideColor: 'bg-teal-100',
-  },
-  {
-    id: 12,
-    title: 'Semua Tentangmu',
-    artist: 'Hu Tao',
-    genre: 'Indo Pop',
-    format: 'Cassette',
-    price: 19,
-    rating: 4,
-    duration: '4:22',
-    audio: '/music/Hu Tao - Semua Tentangmu (Ai Cover) - 128.mp3',
-    image: '/subaruhoshino.jpeg',
-    baseColor: 'bg-fuchsia-950',
-    borderColor: 'border-fuchsia-300',
-    discColor: 'bg-pink-300',
-    sideColor: 'bg-fuchsia-100',
-  },
-  {
-    id: 13,
-    title: 'Separuh Aku',
-    artist: 'Hu Tao',
-    genre: 'Indo Rock',
-    format: 'Vinyl',
-    price: 27,
-    rating: 5,
-    duration: '4:20',
-    audio: '/music/Hu Tao - Separuh Aku (Ai Cover) - 128.mp3',
-    image: '/download (11).jpeg',
-    baseColor: 'bg-neutral-950',
-    borderColor: 'border-yellow-300',
-    discColor: 'bg-yellow-400',
-    sideColor: 'bg-neutral-100',
-  },
-  {
-    id: 14,
-    title: 'Lebih Dari Bintang',
-    artist: 'Hu Tao',
-    genre: 'Synth Pop',
-    format: 'VHS',
-    price: 25,
-    rating: 4,
-    duration: '3:52',
-    audio: '/music/Lebih Dari Bintang - Hu tao ( Ai Genshin).mp3',
-    image: '/download (12).jpg',
-    baseColor: 'bg-indigo-950',
-    borderColor: 'border-indigo-300',
-    discColor: 'bg-violet-300',
-    sideColor: 'bg-indigo-100',
-  },
-  {
-    id: 15,
-    title: 'Mariposa',
-    artist: 'Hu Tao',
-    genre: 'Dream Pop',
-    format: 'Cassette',
-    price: 22,
-    rating: 5,
-    duration: '3:30',
-    audio: '/music/Mariposa - Peach Tree Rascals  cover by Hu Tao (AI Cover) - 128.mp3',
-    image: '/d96e88a4-ce32-4e49-8f13-257aa58e4d0b.jpg',
-    baseColor: 'bg-pink-950',
-    borderColor: 'border-pink-300',
-    discColor: 'bg-lime-300',
-    sideColor: 'bg-pink-100',
-  },
-  {
-    id: 16,
-    title: 'Monokrom',
-    artist: 'Hu Tao',
-    genre: 'Acoustic',
-    format: 'Vinyl',
-    price: 29,
-    rating: 5,
-    duration: '3:35',
-    audio: '/music/monokrom - Hu Tao Ai Cover.mp3',
-    image: '/download (11).jpg',
-    baseColor: 'bg-stone-950',
-    borderColor: 'border-stone-200',
-    discColor: 'bg-stone-400',
-    sideColor: 'bg-stone-100',
-  },
-  {
-    id: 17,
-    title: 'December',
-    artist: 'Raiden',
-    genre: 'Winter Pop',
-    format: 'Cassette',
-    price: 20,
-    rating: 4,
-    duration: '4:05',
-    audio: '/music/Raiden - December (Ai Cover) - 128.mp3',
-    image: '/her.jpg',
-    baseColor: 'bg-cyan-950',
-    borderColor: 'border-cyan-200',
-    discColor: 'bg-sky-300',
-    sideColor: 'bg-cyan-100',
-  },
-  {
-    id: 18,
-    title: 'Somewhere Only We Know',
-    artist: 'Hu Tao',
-    genre: 'Acoustic',
-    format: 'VHS',
-    price: 24,
-    rating: 5,
-    duration: '3:49',
-    audio: '/music/Somewhere Only We Know-Keane-Cover IA Hu Tao-Sub español - 128.mp3',
-    image: '/Yoru.jpeg',
-    baseColor: 'bg-emerald-950',
-    borderColor: 'border-emerald-300',
-    discColor: 'bg-emerald-400',
-    sideColor: 'bg-green-100',
-  },
-];
+  if (!audio || !audio.duration || !Number.isFinite(nextProgress)) return;
+
+  audio.currentTime = Math.min(100, Math.max(0, nextProgress)) / 100 * audio.duration;
+  currentTime.value = audio.currentTime;
+  progressById[currentProductId.value] = Math.min(100, Math.max(0, nextProgress));
+  emitPlayerState();
+};
+
+const setVolume = (value) => {
+  const nextVolume = Math.min(1, Math.max(0, Number(value)));
+  if (!Number.isFinite(nextVolume)) return;
+
+  volume.value = nextVolume;
+  audioById.forEach((audio) => {
+    audio.volume = nextVolume;
+  });
+  emitPlayerState();
+};
+
+const currentProduct = computed(() => products.find((product) => product.id === currentProductId.value));
 
 const genres = computed(() => ['All', ...new Set(products.map((product) => product.genre))]);
 const formats = computed(() => [...new Set(products.map((product) => product.format))]);
+const highlightGroups = computed(() => [
+  {
+    title: 'Recommended Music',
+    caption: 'Easy starts for the archive mood',
+    icon: 'headphones',
+    items: [2, 7, 10, 16].map((id) => products.find((product) => product.id === id)).filter(Boolean),
+  },
+  {
+    title: 'Popular Picks',
+    caption: 'Highest rated tapes in the shelf',
+    icon: 'flame',
+    items: products.filter((product) => product.rating >= 5).slice(0, 5),
+  },
+  {
+    title: 'Trending Musics',
+    caption: 'Fresh additions from the public folder',
+    icon: 'sparkles',
+    items: products.slice(-4).reverse(),
+  },
+]);
 
 const filteredProducts = computed(() => {
   const query = search.value.trim().toLowerCase();
 
   const filtered = products.filter((product) => {
-    const matchesSearch = [product.title, product.artist].some((value) => value.toLowerCase().includes(query));
+    const matchesSearch = [product.title, product.artist, product.genre, product.subGenre]
+      .filter(Boolean)
+      .some((value) => value.toLowerCase().includes(query));
     const matchesGenre = selectedGenre.value === 'All' || product.genre === selectedGenre.value;
     const matchesFormat = selectedFormats.value.length === 0 || selectedFormats.value.includes(product.format);
 
@@ -644,7 +472,9 @@ const emitPlayerState = () => {
     product,
     isPlaying: isCurrentAudioPlaying.value,
     currentTime: currentTime.value,
+    duration: durationById[product.id] || 0,
     progress: progressById[product.id] || 0,
+    volume: volume.value,
     activeProductId: activeProduct.value,
   });
 };
@@ -654,24 +484,20 @@ onMounted(() => {
 });
 
 defineExpose({
+  seekCurrent,
+  setVolume,
   togglePreview,
   stopPreview,
 });
 
 const genreTagClass = (genre) => {
   const classes = {
-    'J-Pop': 'neon-pink',
-    'Lo-fi': 'neon-green',
-    'City Pop': 'neon-cyan',
-    Indie: 'neon-violet',
-    'Dream Pop': 'neon-rose',
+    Pop: 'neon-pink',
+    Chill: 'neon-green',
+    Rock: 'neon-violet',
     Ballad: 'neon-red',
-    'Alt Rock': 'neon-emerald',
-    'Indo Pop': 'neon-teal',
-    'Indo Rock': 'neon-gold',
-    'Synth Pop': 'neon-indigo',
+    Electronic: 'neon-indigo',
     Acoustic: 'neon-stone',
-    'Winter Pop': 'neon-ice',
   };
 
   return classes[genre] || 'neon-amber';
@@ -718,6 +544,25 @@ const formatTagClass = (format) => {
   transform: translateX(0);
 }
 
+.filter-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 143, 66, 0.7) rgba(255, 255, 255, 0.08);
+}
+
+.filter-scroll::-webkit-scrollbar {
+  width: 0.4rem;
+}
+
+.filter-scroll::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(245, 143, 66, 0.72);
+}
+
 .filter-rail-enter-active,
 .filter-rail-leave-active,
 .filter-mobile-enter-active,
@@ -750,8 +595,9 @@ const formatTagClass = (format) => {
 
 .neon-tag {
   display: inline-flex;
-  max-width: 50%;
+  max-width: 64%;
   align-items: center;
+  gap: 0.25rem;
   overflow: hidden;
   border-radius: 9999px;
   border: 1px solid currentColor;
@@ -763,6 +609,13 @@ const formatTagClass = (format) => {
   text-overflow: ellipsis;
   white-space: nowrap;
   box-shadow: 0 0 12px color-mix(in srgb, currentColor 26%, transparent);
+}
+
+.tag-sub {
+  min-width: 0;
+  overflow: hidden;
+  opacity: 0.72;
+  text-overflow: ellipsis;
 }
 
 .neon-pink {
@@ -870,3 +723,4 @@ const formatTagClass = (format) => {
   }
 }
 </style>
+

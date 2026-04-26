@@ -1,46 +1,9 @@
 <script setup>
-import axios from "axios";
-import { ref, onMounted, reactive, watch } from "vue";
-import { RouterView, useRoute } from 'vue-router'
-import Header from "./layouts/Header.vue";
-import ButtonVx from "./components/ButtonVx.vue";
-import customFetch from "./api.ts";
-
-const route = useRoute()
-const disableHeader = ref(false)
-
-const getData = async () => {
-  const res = await customFetch.get('/test')
-  console.log(res);
-}
-
-const toggleHeader = () =>{
-  if (route.fullPath === '/login' || route.fullPath === '/') {
-    disableHeader.value = true
-  } else {
-    disableHeader.value = false
-  }
-}
-
-onMounted(() => {
-  getData()
-  toggleHeader()
-})
-
-// jalankan lagi setiap route berubah
-watch(
-  () => route.fullPath,
-  () => {
-    toggleHeader()
-  }
-)
-
+import { RouterView } from 'vue-router';
 </script>
 
 <template>
-  
-  <main class="-z-20 bg-shark-950" :class="route.fullPath !== '/login' ? '' : ''">
+  <main class="-z-20 bg-shark-950">
     <RouterView />
-    
   </main>
 </template>

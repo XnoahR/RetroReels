@@ -32,7 +32,7 @@
 
     <div class="absolute bottom-5 left-4 z-20 flex items-center gap-3 rounded-md border border-white/15 bg-black/55 px-4 py-3 text-white backdrop-blur sm:left-8 lg:left-12">
       <span class="h-2 w-2 rounded-full bg-serenade-400 shadow-[0_0_12px_#f58f42]"></span>
-      <span class="text-xs font-bold uppercase tracking-[0.22em] text-gray-200">Scroll for catalog</span>
+      <span class="text-xs font-bold uppercase tracking-[0.22em] text-gray-200">Use headset for better experience</span>
     </div>
   </section>
 </template>

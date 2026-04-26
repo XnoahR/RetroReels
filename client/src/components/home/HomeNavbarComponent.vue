@@ -29,12 +29,12 @@
         >
           <Github class="h-5 w-5" />
         </a>
-        <RouterLink
-          to="/login"
+        <button
+          @click="handleLogout"
           class="hidden h-10 items-center rounded-md bg-serenade-500 px-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-serenade-400 sm:inline-flex"
         >
-          Account
-        </RouterLink>
+          Logout
+        </button>
       </div>
     </div>
   </nav>
@@ -42,12 +42,20 @@
 
 <script setup lang="ts">
 import { Github, Home, ListMusic, Radio, UserRound } from 'lucide-vue-next';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const handleLogout = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  router.push('/');
+};
 
 const routes = [
   { label: 'Home', to: '/home', icon: Home },
   { label: 'Category', to: '/categories', icon: ListMusic },
-  { label: 'Player', to: '/home', icon: Radio },
-  { label: 'Account', to: '/login', icon: UserRound },
+  { label: 'Player', to: '/player', icon: Radio },
+  { label: 'Account', to: '/account', icon: UserRound },
 ];
 </script>

@@ -15,5 +15,5 @@
 </template>
 
 <script setup>
-import DiscTape from './DiscTape.vue';
+import DiscTape from '../catalog/media/DiscTape.vue';
 </script>

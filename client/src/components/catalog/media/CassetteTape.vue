@@ -1,14 +1,9 @@
 <template>
   <div class="cassette-stage" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
     <div
+      ref="cassetteRef"
       class="cassette-shell"
-      :class="[
-        baseColor,
-        {
-          'cassette-shell-hovering': hoverState === 'hovering',
-          'cassette-shell-leaving': hoverState === 'leaving',
-        },
-      ]"
+      :class="baseColor"
     >
       <div class="absolute inset-3 rounded-lg border border-white/25 bg-black/20"></div>
 
@@ -30,8 +25,8 @@
       <div class="absolute bottom-2 left-1/2 h-3 w-20 -translate-x-1/2 rounded-t-lg border-x-2 border-t-2 border-black/60 bg-black/20"></div>
     </div>
 
-    <div class="cassette-case">
-      <img :src="image" :alt="`${title} cassette cover`" />
+    <div class="cassette-case" :style="caseStyle">
+      <img :src="coverImage" :alt="`${title} cassette cover`" @error="handleImageError" />
       <div class="case-spine">
         <span>Cassette</span>
       </div>
@@ -54,25 +49,55 @@ const props = defineProps({
   active: { type: Boolean, default: false },
 });
 
+const fallbackImage = '/RR.png';
+const imageFailed = ref(false);
+const coverImage = computed(() => (imageFailed.value ? fallbackImage : props.image));
+
+const handleImageError = () => {
+  imageFailed.value = true;
+};
+
 const titleClass = computed(() => {
   if (props.title.length > 32) return 'cover-title cover-title-xs';
   if (props.title.length > 22) return 'cover-title cover-title-sm';
   return 'cover-title';
 });
 
-const hoverState = ref('idle');
-let leaveTimer;
+const cassetteRef = ref(null);
+const isHovering = ref(false);
+let animation = null;
+
+const caseStyle = computed(() => ({
+  transform: isHovering.value ? 'translateX(-0.5rem)' : 'translateX(0)',
+}));
 
 const handleMouseEnter = () => {
-  window.clearTimeout(leaveTimer);
-  hoverState.value = 'hovering';
+  isHovering.value = true;
+  if (!cassetteRef.value) return;
+
+  if (!animation) {
+    animation = cassetteRef.value.animate([
+      { zIndex: 1, transform: 'translateX(0.35rem)' },
+      { zIndex: 1, transform: 'translateX(5.4rem)', offset: 0.5 },
+      { zIndex: 4, transform: 'translateX(5.4rem)', offset: 0.51 },
+      { zIndex: 4, transform: 'translateX(2.65rem)' }
+    ], {
+      duration: 600,
+      easing: 'ease-in-out',
+      fill: 'forwards'
+    });
+  } else {
+    animation.playbackRate = 1;
+    animation.play();
+  }
 };
 
 const handleMouseLeave = () => {
-  hoverState.value = 'leaving';
-  leaveTimer = window.setTimeout(() => {
-    hoverState.value = 'idle';
-  }, 620);
+  isHovering.value = false;
+  if (animation) {
+    animation.playbackRate = -1;
+    animation.play();
+  }
 };
 </script>
 
@@ -95,7 +120,7 @@ const handleMouseLeave = () => {
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: #111;
   box-shadow: 0 18px 35px rgba(0, 0, 0, 0.5);
-  transition: transform 0.35s ease;
+  transition: transform 0.4s ease-out;
 }
 
 .cassette-case img {
@@ -134,8 +159,10 @@ const handleMouseLeave = () => {
   position: absolute;
   inset-x: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-  padding: 2.75rem 0.75rem 0.75rem 1.75rem;
+  box-sizing: border-box;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.84), rgba(0, 0, 0, 0.62) 66%, transparent);
+  padding: 1.65rem 0.75rem 0.65rem 1.75rem;
   color: white;
 }
 
@@ -188,20 +215,6 @@ const handleMouseLeave = () => {
   transform: translateX(0.35rem);
 }
 
-.group:hover .cassette-case {
-  transform: translateX(-0.25rem);
-}
-
-.cassette-shell-hovering {
-  z-index: 4;
-  animation: cassette-hover-out 0.62s ease forwards;
-}
-
-.cassette-shell-leaving {
-  z-index: 4;
-  animation: cassette-hover-back 0.62s ease forwards;
-}
-
 .cassette-reel {
   display: grid;
   flex: 0 0 2.45rem;
@@ -235,50 +248,6 @@ const handleMouseLeave = () => {
 @keyframes cassette-spin {
   to {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes cassette-hover-out {
-  0% {
-    z-index: 1;
-    transform: translateX(0.35rem);
-  }
-
-  52% {
-    z-index: 1;
-    transform: translateX(4.8rem);
-  }
-
-  53% {
-    z-index: 4;
-    transform: translateX(4.8rem);
-  }
-
-  100% {
-    z-index: 4;
-    transform: translateX(2.65rem);
-  }
-}
-
-@keyframes cassette-hover-back {
-  0% {
-    z-index: 4;
-    transform: translateX(2.65rem);
-  }
-
-  48% {
-    z-index: 4;
-    transform: translateX(4.8rem);
-  }
-
-  49% {
-    z-index: 1;
-    transform: translateX(4.8rem);
-  }
-
-  100% {
-    z-index: 1;
-    transform: translateX(0.35rem);
   }
 }
 </style>

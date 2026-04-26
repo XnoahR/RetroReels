@@ -2,6 +2,16 @@
   <HomeLayout>
     <section class="min-h-screen bg-shark-950">
       <HomeCarousel />
+      <ExclusiveMusic
+        :product="exclusiveProduct"
+        :current-label="exclusiveCurrentLabel"
+        :duration-label="exclusiveDurationLabel"
+        :is-active="isExclusiveActive"
+        :is-playing="player.isPlaying"
+        :progress="isExclusiveActive ? player.progress : 0"
+        @seek="seekCurrent"
+        @toggle="toggleExclusive"
+      />
       <Catalog ref="catalogRef" @player-state="updatePlayerState" />
 
       <Teleport to="body">
@@ -11,12 +21,21 @@
               <div class="mini-track">
                 <span>{{ player.isPlaying ? 'Now Playing' : 'Ready' }} / {{ displayedProduct.artist }} - {{ displayedProduct.title }}</span>
               </div>
-              <div class="mini-time">{{ formatTime(player.currentTime) }} / {{ displayedProduct.duration }}</div>
+              <div class="mini-time">{{ formatTime(player.currentTime) }} / {{ displayedDuration }}</div>
             </div>
 
-            <div class="mini-progress">
-              <div :style="{ width: `${player.progress}%` }"></div>
-            </div>
+            <input
+              class="mini-range mini-seek"
+              type="range"
+              min="0"
+              max="100"
+              step="0.1"
+              :value="player.progress"
+              :style="{ '--range-fill': `${player.progress}%` }"
+              :disabled="!player.product"
+              aria-label="Seek audio"
+              @input="seekCurrent"
+            />
 
             <div class="mini-controls">
               <button type="button" class="mini-button primary" :aria-label="player.isPlaying ? 'Pause' : 'Play'" @click="toggleCurrent">
@@ -26,24 +45,60 @@
               <button type="button" class="mini-button" aria-label="Stop" @click="stopCurrent">
                 <Square class="h-4 w-4 fill-current" />
               </button>
+              <div class="mini-volume">
+                <Volume2 class="h-4 w-4" />
+                <button
+                  ref="volumeKnobRef"
+                  type="button"
+                  class="mini-knob"
+                  role="slider"
+                  aria-label="Volume"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  :aria-valuenow="volumePercent"
+                  :style="{ '--knob-angle': `${volumeKnobAngle}deg` }"
+                  @keydown="handleVolumeKeydown"
+                  @pointerdown="startVolumeDrag"
+                  @pointermove="dragVolume"
+                  @pointerup="stopVolumeDrag"
+                  @pointercancel="stopVolumeDrag"
+                  @lostpointercapture="stopVolumeDrag"
+                >
+                  <span></span>
+                </button>
+                <span class="mini-volume-value">{{ volumePercent }}</span>
+              </div>
             </div>
           </div>
 
           <img class="mini-cover" :src="displayedProduct.image" :alt="`${displayedProduct.title} cover`" />
         </aside>
       </Teleport>
+
     </section>
   </HomeLayout>
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
-import HomeCarousel from '@/components/HomeCarousel.vue';
+import { computed, reactive, ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import ExclusiveMusic from '@/components/home/ExclusiveMusic.vue';
+import HomeCarousel from '@/components/home/HomeCarousel.vue';
 import Catalog from '@/layouts/Catalog.vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
-import { Pause, Play, Square } from 'lucide-vue-next';
+import { Pause, Play, Square, Volume2 } from 'lucide-vue-next';
+
+const router = useRouter();
+
+onMounted(() => {
+  if (!localStorage.getItem('token')) {
+    router.push('/');
+  }
+});
 
 const catalogRef = ref(null);
+const volumeKnobRef = ref(null);
+const isVolumeDragging = ref(false);
 const fallbackProduct = {
   id: 1,
   title: 'Retro Reels Player',
@@ -51,21 +106,43 @@ const fallbackProduct = {
   image: '/Yoru.jpeg',
   duration: '0:00',
 };
+const exclusiveProduct = {
+  id: 19,
+  title: 'No. 1 Party Anthem',
+  artist: 'Arctic Monkeys',
+  genre: 'Rock',
+  subGenre: 'Indie Rock',
+  format: 'Vinyl',
+  image: '/no1partyanthem.png',
+  duration: '4:03',
+};
 
 const player = reactive({
   product: null,
   isPlaying: false,
   currentTime: 0,
+  duration: 0,
   progress: 0,
+  volume: 0.8,
 });
 
 const displayedProduct = computed(() => player.product || fallbackProduct);
+const isExclusiveActive = computed(() => player.product?.id === exclusiveProduct.id);
+const exclusiveCurrentLabel = computed(() => (isExclusiveActive.value ? formatTime(player.currentTime) : '0:00'));
+const exclusiveDurationLabel = computed(() => {
+  if (isExclusiveActive.value && player.duration) return formatTime(player.duration);
+  return exclusiveProduct.duration;
+});
+const volumePercent = computed(() => Math.round(player.volume * 100));
+const volumeKnobAngle = computed(() => -135 + player.volume * 270);
 
 const updatePlayerState = (state) => {
   player.product = state.product;
   player.isPlaying = state.isPlaying;
   player.currentTime = state.currentTime;
+  player.duration = state.duration;
   player.progress = state.progress;
+  player.volume = state.volume;
 };
 
 const toggleCurrent = () => {
@@ -73,8 +150,65 @@ const toggleCurrent = () => {
   catalogRef.value?.togglePreview(player.product);
 };
 
+const toggleExclusive = () => {
+  catalogRef.value?.togglePreview(exclusiveProduct);
+};
+
 const stopCurrent = () => {
   catalogRef.value?.stopPreview();
+};
+
+const seekCurrent = (event) => {
+  catalogRef.value?.seekCurrent(event.target.value);
+};
+
+const setVolumeValue = (value) => {
+  catalogRef.value?.setVolume(value);
+};
+
+const updateVolumeFromPointer = (event) => {
+  const rect = volumeKnobRef.value?.getBoundingClientRect();
+  if (!rect) return;
+
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  let rawAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * (180 / Math.PI) + 90;
+  if (rawAngle > 180) rawAngle -= 360;
+  if (rawAngle < -180) rawAngle += 360;
+
+  const angle = Math.min(135, Math.max(-135, rawAngle));
+
+  setVolumeValue((angle + 135) / 270);
+};
+
+const startVolumeDrag = (event) => {
+  event.preventDefault();
+  isVolumeDragging.value = true;
+  event.currentTarget.setPointerCapture(event.pointerId);
+  updateVolumeFromPointer(event);
+};
+
+const dragVolume = (event) => {
+  if (!isVolumeDragging.value) return;
+  updateVolumeFromPointer(event);
+};
+
+const stopVolumeDrag = () => {
+  isVolumeDragging.value = false;
+};
+
+const handleVolumeKeydown = (event) => {
+  const step = event.shiftKey ? 0.1 : 0.05;
+  let nextVolume = player.volume;
+
+  if (event.key === 'ArrowUp' || event.key === 'ArrowRight') nextVolume += step;
+  else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') nextVolume -= step;
+  else if (event.key === 'Home') nextVolume = 0;
+  else if (event.key === 'End') nextVolume = 1;
+  else return;
+
+  event.preventDefault();
+  setVolumeValue(Math.min(1, Math.max(0, nextVolume)));
 };
 
 const formatTime = (seconds) => {
@@ -84,6 +218,11 @@ const formatTime = (seconds) => {
   const remainingSeconds = Math.floor(seconds % 60).toString().padStart(2, '0');
   return `${minutes}:${remainingSeconds}`;
 };
+
+const displayedDuration = computed(() => {
+  if (player.duration) return formatTime(player.duration);
+  return displayedProduct.value.duration;
+});
 </script>
 
 <style scoped>
@@ -91,7 +230,7 @@ const formatTime = (seconds) => {
   position: fixed;
   right: 2rem;
   bottom: 2rem;
-  z-index: 2147483647;
+  z-index: 2147483000;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 7.25rem;
   gap: 1rem;
@@ -124,7 +263,7 @@ const formatTime = (seconds) => {
 
 .mini-main {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto;
   gap: 0.75rem;
   min-width: 0;
 }
@@ -172,19 +311,109 @@ const formatTime = (seconds) => {
   gap: 0.5rem;
 }
 
-.mini-progress {
-  height: 6px;
-  overflow: hidden;
-  border-radius: 3px;
-  background: #333;
+.mini-volume {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+  gap: 0.45rem;
+  color: #00ff41;
 }
 
-.mini-progress div {
-  height: 100%;
+.mini-knob {
+  position: relative;
+  display: grid;
+  height: 2.5rem;
+  width: 2.5rem;
+  touch-action: none;
+  place-items: center;
+  border: 1px solid #555;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.28), transparent 24%),
+    linear-gradient(145deg, #4c4c4c, #171717);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.22),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.55),
+    0 0 0 2px rgba(0, 0, 0, 0.45);
+  cursor: grab;
+}
+
+.mini-knob:active {
+  cursor: grabbing;
+}
+
+.mini-knob:focus-visible {
+  outline: 2px solid #00ff41;
+  outline-offset: 3px;
+}
+
+.mini-knob::before {
+  content: "";
+  position: absolute;
+  inset: 0.35rem;
   border-radius: inherit;
-  background: #00ff41;
-  box-shadow: 0 0 8px rgba(0, 255, 65, 0.55);
-  transition: width 0.15s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle, #292929 0 34%, #111 35% 100%);
+}
+
+.mini-knob span {
+  position: absolute;
+  top: 0.34rem;
+  left: 50%;
+  z-index: 1;
+  height: 0.65rem;
+  width: 0.16rem;
+  transform: translateX(-50%) rotate(var(--knob-angle));
+  transform-origin: 50% 0.9rem;
+  border-radius: 999px;
+  background: #ff6b35;
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.85);
+}
+
+.mini-volume-value {
+  min-width: 1.6rem;
+  color: #ff6b35;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-align: right;
+  text-shadow: 0 0 6px rgba(255, 107, 53, 0.75);
+}
+
+.mini-range {
+  width: 100%;
+  height: 0.45rem;
+  cursor: pointer;
+  appearance: none;
+  border: 1px solid #222;
+  border-radius: 999px;
+  background:
+    linear-gradient(90deg, #00ff41, #00ff41) 0 / var(--range-fill, 0%) 100% no-repeat,
+    #333;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.mini-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.mini-range::-webkit-slider-thumb {
+  height: 1rem;
+  width: 1rem;
+  appearance: none;
+  border: 2px solid #101010;
+  border-radius: 999px;
+  background: #ff6b35;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.45);
+}
+
+.mini-range::-moz-range-thumb {
+  height: 0.8rem;
+  width: 0.8rem;
+  border: 2px solid #101010;
+  border-radius: 999px;
+  background: #ff6b35;
+  box-shadow: 0 0 10px rgba(255, 107, 53, 0.45);
 }
 
 .mini-button {

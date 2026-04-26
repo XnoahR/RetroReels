@@ -1,12 +1,6 @@
 <template>
   <div class="vhs-stage" @mouseenter="handleMouseEnter" @mouseleave="handleMouseLeave">
-    <div
-      class="vhs-tape"
-      :class="{
-        'vhs-tape-hovering': hoverState === 'hovering',
-        'vhs-tape-leaving': hoverState === 'leaving',
-      }"
-    >
+    <div ref="tapeRef" class="vhs-tape">
       <DiscTape
       :title="title"
       :image="image"
@@ -26,8 +20,8 @@
       />
     </div>
 
-    <div class="vhs-box">
-      <img :src="image" :alt="`${title} VHS cover`" />
+    <div class="vhs-box" :style="boxStyle">
+      <img :src="coverImage" :alt="`${title} VHS cover`" @error="handleImageError" />
       <div class="vhs-spine">
         <span>{{ formatLabel }}</span>
       </div>
@@ -54,25 +48,55 @@ const props = defineProps({
   formatLabel: { type: String, default: 'VHS' },
 });
 
+const fallbackImage = '/RR.png';
+const imageFailed = ref(false);
+const coverImage = computed(() => (imageFailed.value ? fallbackImage : props.image));
+
+const handleImageError = () => {
+  imageFailed.value = true;
+};
+
 const titleClass = computed(() => {
   if (props.title.length > 32) return 'cover-title cover-title-xs';
   if (props.title.length > 22) return 'cover-title cover-title-sm';
   return 'cover-title';
 });
 
-const hoverState = ref('idle');
-let leaveTimer;
+const tapeRef = ref(null);
+const isHovering = ref(false);
+let animation = null;
+
+const boxStyle = computed(() => ({
+  transform: isHovering.value ? 'translateX(-0.25rem)' : 'translateX(0)',
+}));
 
 const handleMouseEnter = () => {
-  window.clearTimeout(leaveTimer);
-  hoverState.value = 'hovering';
+  isHovering.value = true;
+  if (!tapeRef.value) return;
+
+  if (!animation) {
+    animation = tapeRef.value.animate([
+      { zIndex: 1, transform: 'translateX(0.25rem)' },
+      { zIndex: 1, transform: 'translateX(5.4rem)', offset: 0.5 },
+      { zIndex: 4, transform: 'translateX(5.4rem)', offset: 0.51 },
+      { zIndex: 4, transform: 'translateX(2.75rem)' }
+    ], {
+      duration: 600,
+      easing: 'ease-in-out',
+      fill: 'forwards'
+    });
+  } else {
+    animation.playbackRate = 1;
+    animation.play();
+  }
 };
 
 const handleMouseLeave = () => {
-  hoverState.value = 'leaving';
-  leaveTimer = window.setTimeout(() => {
-    hoverState.value = 'idle';
-  }, 620);
+  isHovering.value = false;
+  if (animation) {
+    animation.playbackRate = -1;
+    animation.play();
+  }
 };
 </script>
 
@@ -95,7 +119,7 @@ const handleMouseLeave = () => {
   border: 1px solid rgba(255, 255, 255, 0.34);
   background: #111;
   box-shadow: 0 18px 35px rgba(0, 0, 0, 0.5);
-  transition: transform 0.35s ease;
+  transition: transform 0.4s ease-out;
 }
 
 .vhs-box img {
@@ -127,8 +151,10 @@ const handleMouseLeave = () => {
   position: absolute;
   inset-x: 0;
   bottom: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent);
-  padding: 2.75rem 0.75rem 0.75rem 1.8rem;
+  box-sizing: border-box;
+  width: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.84), rgba(0, 0, 0, 0.62) 66%, transparent);
+  padding: 1.65rem 0.75rem 0.65rem 1.8rem;
   color: white;
 }
 
@@ -173,63 +199,5 @@ const handleMouseLeave = () => {
   top: 2.55rem;
   z-index: 1;
   transform: translateX(0.25rem);
-}
-
-.group:hover .vhs-box {
-  transform: translateX(-0.25rem);
-}
-
-.vhs-tape-hovering {
-  z-index: 4;
-  animation: vhs-hover-out 0.62s ease forwards;
-}
-
-.vhs-tape-leaving {
-  z-index: 4;
-  animation: vhs-hover-back 0.62s ease forwards;
-}
-
-@keyframes vhs-hover-out {
-  0% {
-    z-index: 1;
-    transform: translateX(0.25rem);
-  }
-
-  52% {
-    z-index: 1;
-    transform: translateX(4.9rem);
-  }
-
-  53% {
-    z-index: 4;
-    transform: translateX(4.9rem);
-  }
-
-  100% {
-    z-index: 4;
-    transform: translateX(2.75rem);
-  }
-}
-
-@keyframes vhs-hover-back {
-  0% {
-    z-index: 4;
-    transform: translateX(2.75rem);
-  }
-
-  48% {
-    z-index: 4;
-    transform: translateX(4.9rem);
-  }
-
-  49% {
-    z-index: 1;
-    transform: translateX(4.9rem);
-  }
-
-  100% {
-    z-index: 1;
-    transform: translateX(0.25rem);
-  }
 }
 </style>

@@ -10,3 +10,7 @@
                 </div>
             </div>
 </template>
+
+<script setup>
+import DiscTape from '../catalog/media/DiscTape.vue';
+</script>

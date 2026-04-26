@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router'; // Import useRouter to handle navigation
 import Menubar from 'primevue/menubar';
-import FormAuthComponent from "@/components/FormAuthComponent.vue";
+import FormAuthComponent from "@/components/auth/FormAuthComponent.vue";
 
 const dialog = ref(false);
 const router = useRouter(); // Get router instance
@@ -22,16 +22,16 @@ const items = ref([
         command: () => router.push({ name: 'About' })
     },
     {
-        label: "Category",
-        icon: 'pi pi-th-large',
-        name: "Category",
-        command: () => router.push({ name: 'Category' })
-    },
-    {
         label: 'Contacts',
         icon: 'pi pi-envelope',
         name: "Contact",
         command: () => router.push({ name: 'Contact' })
+    },
+    {
+        label: 'Player',
+        icon: 'pi pi-play',
+        name: "Player",
+        command: () => router.push({ name: 'Player' })
     }
 ]);
 
@@ -55,11 +55,11 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
         <div id="MenuBar" class="w-1/3  me-24 max-sm:hidden">
             <ul class="flex max-sm:flex-col justify-center items-center ">
                 <li v-for="(item, index) in items" @click="item.command" key="index"
-                    class="hover:cursor-pointer font-semibold border-black mx-6">{{ item.label }}
+                    class="hover:cursor-pointer font-semibold border-black mx-6 text-white">{{ item.label }}
                 </li>
                 <li
                     @click="GoToLogin"
-                    class="mx-6 bg-bay-leaf-300 hover:cursor-pointer hover:bg-bay-leaf-500 px-5 py-1 font-semibold rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none">
+                    class="mx-6 bg-bay-leaf-300 hover:cursor-pointer hover:bg-bay-leaf-500 px-5 py-1 font-semibold text-white rounded-md shadow-[1px_2px_1px_1px_#2d3748] hover:shadow-none">
                     Login</li>
             </ul>
         </div>
