@@ -181,6 +181,36 @@ export const updatePassword = async (req: AuthenticatedRequest, res: Response) =
   return res.json({ message: 'Password updated' });
 };
 
+export const topUpCredits = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: 'Authentication required' });
+  }
+
+  const amount = Number(req.body.amount);
+
+  if (!Number.isFinite(amount) || amount < 10 || amount > 5000) {
+    return res.status(400).json({ message: 'Top up amount must be between $10 and $5000' });
+  }
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { credits: { increment: Math.floor(amount) } },
+  });
+
+  return res.json({
+    message: 'Dummy payment completed',
+    transaction: {
+      id: `RR-MID-${Date.now()}`,
+      provider: 'Dummy Midtrans',
+      status: 'settlement',
+      amount: Math.floor(amount),
+    },
+    user: toSafeUser(user),
+  });
+};
+
 export const logout = async (_req: Request, res: Response) => {
   return res.json({ message: 'Logged out successfully' });
 };

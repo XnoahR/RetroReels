@@ -22,20 +22,15 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <div
+        <RouterLink
           v-if="isLoggedIn"
-          class="group relative hidden h-10 items-center rounded-md border border-white/10 bg-white/10 px-3 text-sm font-black text-serenade-300 sm:inline-flex"
+          to="/top-up"
+          class="hidden h-10 items-center gap-2 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-black text-serenade-300 transition hover:border-serenade-500/50 hover:bg-serenade-500/10 sm:inline-flex"
         >
-          <Coins class="mr-2 h-4 w-4" />
-          ${{ currentUser.credits ?? 0 }}
-          <button
-            type="button"
-            class="absolute right-0 top-11 hidden whitespace-nowrap rounded-md border border-serenade-500/40 bg-black px-3 py-2 text-xs font-black uppercase tracking-widest text-serenade-300 shadow-2xl group-hover:block"
-            @click="handleTopUp"
-          >
-            Top Up
-          </button>
-        </div>
+          <Coins class="h-4 w-4" />
+          <span>${{ currentUser.credits ?? 0 }}</span>
+          <span class="rounded bg-serenade-500 px-2 py-1 text-[0.62rem] uppercase tracking-widest text-black">Top Up</span>
+        </RouterLink>
         <RouterLink
           v-if="isLoggedIn"
           to="/cart"
@@ -124,8 +119,20 @@ const loadCurrentUser = async () => {
   }
 };
 
-const handleTopUp = () => {
-  window.alert('Top Up coming soon.');
+const applyUserUpdate = (user: any) => {
+  if (!user) return;
+  Object.assign(currentUser, user);
+};
+
+const handleUserUpdated = (event: Event) => {
+  const nextUser = (event as CustomEvent).detail?.user;
+  if (nextUser) {
+    applyUserUpdate(nextUser);
+    return;
+  }
+
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  applyUserUpdate(storedUser);
 };
 
 const handleLogout = async () => {
@@ -166,10 +173,12 @@ const visibleRoutes = computed(() => {
 onMounted(() => {
   loadCurrentUser();
   document.addEventListener('click', handleDocumentClick);
+  window.addEventListener('retro-reels:user-updated', handleUserUpdated);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleDocumentClick);
+  window.removeEventListener('retro-reels:user-updated', handleUserUpdated);
 });
 </script>
 

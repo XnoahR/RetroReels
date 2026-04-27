@@ -10,6 +10,14 @@ import PlayerView from '@/views/PlayerView.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior(to, from, savedPosition) {
+    if (to.name === 'Social' && sessionStorage.getItem('socialFeedState')) {
+      return false;
+    }
+
+    if ((to.name === 'Profile' || to.name === 'Account') && sessionStorage.getItem('accountProfileScroll')) {
+      return false;
+    }
+
     if (savedPosition) {
       return savedPosition;
     } else {
@@ -44,6 +52,11 @@ const router = createRouter({
       component: SocialView,
     },
     {
+      path: '/posts/:id',
+      name: 'PostDetail',
+      component: () => import('../views/PostDetailView.vue'),
+    },
+    {
       path: '/login',
       name: 'Login',
       component: LoginView,
@@ -58,6 +71,12 @@ const router = createRouter({
       path: '/cart',
       name: 'Cart',
       component: () => import('../views/CartView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/top-up',
+      name: 'TopUp',
+      component: () => import('../views/TopUpView.vue'),
       meta: { requiresAuth: true },
     },
     {

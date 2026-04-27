@@ -4,6 +4,7 @@
       ref="cassetteRef"
       class="cassette-shell"
       :class="baseColor"
+      :style="shellStyle"
     >
       <div class="absolute inset-3 rounded-lg border border-white/25 bg-black/20"></div>
 
@@ -40,6 +41,7 @@
 
 <script setup>
 import { computed, ref } from 'vue';
+import { resolveTapeColor } from './tapeColors';
 
 const props = defineProps({
   title: { type: String, default: 'Untitled' },
@@ -69,6 +71,10 @@ let animation = null;
 
 const caseStyle = computed(() => ({
   transform: isHovering.value ? 'translateX(-0.5rem)' : 'translateX(0)',
+}));
+
+const shellStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.baseColor, '#792d15'),
 }));
 
 const handleMouseEnter = () => {

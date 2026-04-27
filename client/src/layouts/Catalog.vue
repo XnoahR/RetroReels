@@ -284,7 +284,14 @@
               </div>
             </div>
           </article>
+          <div ref="loadMoreTarget" class="col-span-full h-10"></div>
         </div>
+        <div v-if="isLoadingMoreProducts" class="pointer-events-none fixed bottom-28 left-1/2 z-[2147483002] -translate-x-1/2 rounded-full border border-serenade-500/30 bg-black/90 px-5 py-3 text-xs font-black uppercase tracking-widest text-serenade-300 shadow-2xl">
+          Loading more tapes...
+        </div>
+        <p v-else-if="!hasMoreProducts && products.length" class="pb-32 text-center font-mono text-xs uppercase tracking-widest text-gray-600">
+          End of catalog
+        </p>
       </main>
     </div>
 
@@ -333,7 +340,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import customFetch from '@/api';
 import { ChevronLeft, ChevronRight, LayoutGrid, Pause, Play, Search, Star } from 'lucide-vue-next';
@@ -352,7 +359,12 @@ const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
 const sortBy = ref('featured');
 
 const products = ref([]);
+const loadMoreTarget = ref(null);
 const isLoadingProducts = ref(false);
+const isLoadingMoreProducts = ref(false);
+const hasMoreProducts = ref(true);
+const nextProductSkip = ref(0);
+const productPageSize = 12;
 const activeProduct = ref(null);
 const cartMessage = ref('');
 const ownedProductIds = ref(new Set());
@@ -364,6 +376,7 @@ const volume = ref(0.8);
 const audioById = new Map();
 const progressById = reactive({});
 const durationById = reactive({});
+let loadMoreObserver = null;
 
 const setAudioRef = (el, id) => {
   if (el) {
@@ -383,12 +396,25 @@ const normalizeProduct = (product) => ({
   audio: product.track?.audioUrl || product.previewUrl || '',
 });
 
+const fetchProductPage = async (skip) => {
+  const { data } = await customFetch.get('products', {
+    params: {
+      skip,
+      take: productPageSize,
+    },
+  });
+
+  return data;
+};
+
 const loadProducts = async () => {
   isLoadingProducts.value = true;
 
   try {
-    const { data } = await customFetch.get('products');
+    const data = await fetchProductPage(0);
     products.value = (data.data || []).map(normalizeProduct);
+    nextProductSkip.value = data.pagination?.nextSkip ?? products.value.length;
+    hasMoreProducts.value = Boolean(data.pagination?.hasMore);
     if (!currentProductId.value && products.value[0]) {
       currentProductId.value = products.value[0].id;
     }
@@ -396,7 +422,43 @@ const loadProducts = async () => {
     showCartMessage(error.response?.data?.message || 'Could not load catalog.');
   } finally {
     isLoadingProducts.value = false;
+    await nextTick();
+    setupLoadMoreObserver();
   }
+};
+
+const loadMoreProducts = async () => {
+  if (isLoadingProducts.value || isLoadingMoreProducts.value || !hasMoreProducts.value) return;
+  isLoadingMoreProducts.value = true;
+
+  try {
+    const data = await fetchProductPage(nextProductSkip.value);
+    const nextProducts = (data.data || []).map(normalizeProduct);
+    const seen = new Set(products.value.map((product) => product.id));
+    products.value = [
+      ...products.value,
+      ...nextProducts.filter((product) => !seen.has(product.id)),
+    ];
+    nextProductSkip.value = data.pagination?.nextSkip ?? products.value.length;
+    hasMoreProducts.value = Boolean(data.pagination?.hasMore);
+  } catch (error) {
+    showCartMessage(error.response?.data?.message || 'Could not load more catalog.');
+  } finally {
+    isLoadingMoreProducts.value = false;
+  }
+};
+
+const setupLoadMoreObserver = () => {
+  loadMoreObserver?.disconnect();
+  if (!loadMoreTarget.value) return;
+
+  loadMoreObserver = new IntersectionObserver((entries) => {
+    if (entries.some((entry) => entry.isIntersecting)) {
+      loadMoreProducts();
+    }
+  }, { rootMargin: '520px 0px' });
+
+  loadMoreObserver.observe(loadMoreTarget.value);
 };
 
 const loadOwnedProducts = async () => {
@@ -459,6 +521,8 @@ const confirmBuy = async () => {
   try {
     const { data } = await customFetch.post(`orders/buy/${product.id}`);
     if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+    window.dispatchEvent(new CustomEvent('retro-reels:user-updated', { detail: { user: data.user } }));
+    window.dispatchEvent(new CustomEvent('retro-reels:library-updated', { detail: { productId: product.id } }));
     ownedProductIds.value = new Set([...ownedProductIds.value, product.id]);
     showCartMessage(`${product.title} purchased.`);
     closeBuyModal();
@@ -579,6 +643,10 @@ const setVolume = (value) => {
   emitPlayerState();
 };
 
+watch([search, selectedGenre, selectedFormats, sortBy], () => {
+  nextTick(setupLoadMoreObserver);
+}, { deep: true });
+
 const currentProduct = computed(() => products.value.find((product) => product.id === currentProductId.value));
 
 const genres = computed(() => ['All', ...new Set(products.value.map((product) => product.genre).filter(Boolean))]);
@@ -643,6 +711,10 @@ onMounted(async () => {
   await loadProducts();
   await loadOwnedProducts();
   emitPlayerState();
+});
+
+onBeforeUnmount(() => {
+  loadMoreObserver?.disconnect();
 });
 
 defineExpose({

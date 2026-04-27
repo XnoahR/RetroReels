@@ -27,6 +27,7 @@ const socialPostInclude = (userId?: string) => ({
           id: true,
           name: true,
           email: true,
+          avatarUrl: true,
         },
       },
     },
@@ -54,6 +55,28 @@ const formatPost = (post: any, userId?: string) => ({
   likes: undefined,
 });
 
+const ensureUserOwnsProduct = async (userId: string, productId: string) => {
+  const product = await prisma.product.findUnique({ where: { id: productId } });
+  if (!product || !product.isPublished) {
+    return { ok: false as const, status: 404, message: "Product not found" };
+  }
+
+  const order = await prisma.order.findFirst({
+    where: {
+      userId,
+      productId,
+      status: "PAID",
+    },
+    select: { id: true },
+  });
+
+  if (!order) {
+    return { ok: false as const, status: 403, message: "Buy this album before sharing it as an album drop" };
+  }
+
+  return { ok: true as const };
+};
+
 const imageUploadDir = path.resolve(process.cwd(), "../client/public/image-upload");
 const allowedImageTypes: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -68,24 +91,126 @@ const safeSlug = (value: string) => value
   .replace(/^-+|-+$/g, "")
   .slice(0, 48);
 
+const discoveryTags = [
+  { label: "#rock", channel: "Needle Drop" },
+  { label: "#indo", channel: "Indo Covers" },
+  { label: "#citypop", channel: "Now Spinning" },
+  { label: "#vhs", channel: "Tape Scan" },
+  { label: "#lofi", channel: "Loop Note" },
+  { label: "#vinyl", channel: "Shelf Notes" },
+  { label: "#discussion", channel: "Listening Wall" },
+  { label: "#covers", channel: "Indo Covers" },
+];
+
+export const getSocialDiscovery = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
+  const userWhere = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+        ],
+      }
+    : {};
+
+  const [users, trendingPosts] = await Promise.all([
+    prisma.user.findMany({
+      where: userWhere,
+      take: 6,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        bio: true,
+        avatarUrl: true,
+        _count: {
+          select: {
+            socialPosts: true,
+            orders: true,
+          },
+        },
+      },
+    }),
+    prisma.socialPost.findMany({
+      include: socialPostInclude(userId),
+      orderBy: [
+        { likes: { _count: "desc" } },
+        { comments: { _count: "desc" } },
+        { createdAt: "desc" },
+      ],
+      take: 4,
+    }),
+  ]);
+
+  return res.json({
+    data: {
+      users,
+      tags: discoveryTags,
+      trendingPosts: trendingPosts.map((post) => formatPost(post, userId)),
+    },
+  });
+};
+
 export const listSocialPosts = async (req: AuthenticatedRequest, res: Response) => {
   const channel = typeof req.query.channel === "string" ? req.query.channel : undefined;
+  const tag = typeof req.query.tag === "string" ? req.query.tag.trim() : "";
   const sort = typeof req.query.sort === "string" ? req.query.sort : "latest";
+  const skip = Math.max(Number(req.query.skip) || 0, 0);
+  const take = Math.min(Math.max(Number(req.query.take) || 8, 1), 20);
   const userId = req.user?.id;
   const query: any = {
     include: socialPostInclude(userId),
     orderBy: sort === "popular"
       ? [{ likes: { _count: "desc" } }, { comments: { _count: "desc" } }, { createdAt: "desc" }]
       : { createdAt: "desc" },
+    skip,
+    take: take + 1,
   };
 
   if (channel && channel !== "All Signals") {
-    query.where = { channel };
+    query.where = { ...(query.where || {}), channel };
+  }
+
+  if (tag) {
+    query.where = {
+      ...(query.where || {}),
+      body: {
+        contains: tag,
+        mode: "insensitive",
+      },
+    };
   }
 
   const posts = await prisma.socialPost.findMany(query);
+  const hasMore = posts.length > take;
+  const page = hasMore ? posts.slice(0, take) : posts;
 
-  return res.json({ data: posts.map((post) => formatPost(post, userId)) });
+  return res.json({
+    data: page.map((post) => formatPost(post, userId)),
+    pagination: {
+      skip,
+      take,
+      nextSkip: skip + page.length,
+      hasMore,
+    },
+  });
+};
+
+export const getSocialPost = async (req: AuthenticatedRequest, res: Response) => {
+  const postId = req.params.postId;
+  if (!postId) return res.status(400).json({ message: "Post id is required" });
+
+  const userId = req.user?.id;
+  const post = await prisma.socialPost.findUnique({
+    where: { id: postId },
+    include: socialPostInclude(userId),
+  });
+
+  if (!post) return res.status(404).json({ message: "Post not found" });
+
+  return res.json({ data: formatPost(post, userId) });
 };
 
 export const getSocialProfile = async (req: AuthenticatedRequest, res: Response) => {
@@ -108,7 +233,7 @@ export const getSocialProfile = async (req: AuthenticatedRequest, res: Response)
 
   if (!user) return res.status(404).json({ message: "Profile not found" });
 
-  const [posts, likedPosts, products] = await Promise.all([
+  const [posts, likedPosts, products, orders] = await Promise.all([
     prisma.socialPost.findMany({
       where: { userId: profileUserId },
       include: socialPostInclude(viewerId),
@@ -140,6 +265,11 @@ export const getSocialProfile = async (req: AuthenticatedRequest, res: Response)
       },
       orderBy: { createdAt: "desc" },
     }),
+    prisma.order.findMany({
+      where: { userId: profileUserId, status: "PAID" },
+      include: { product: { include: { track: true, vhsDesign: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   return res.json({
@@ -148,6 +278,7 @@ export const getSocialProfile = async (req: AuthenticatedRequest, res: Response)
       posts: posts.map((post) => formatPost(post, viewerId)),
       likedPosts: likedPosts.map((post) => formatPost(post, viewerId)),
       products,
+      orders,
     },
   });
 };
@@ -166,10 +297,8 @@ export const createSocialPost = async (req: AuthenticatedRequest, res: Response)
   }
 
   if (productId) {
-    const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product || !product.isPublished) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    const ownership = await ensureUserOwnsProduct(userId, productId);
+    if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
   }
 
   const post = await prisma.socialPost.create({
@@ -209,10 +338,8 @@ export const updateSocialPost = async (req: AuthenticatedRequest, res: Response)
   }
 
   if (productId) {
-    const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product || !product.isPublished) {
-      return res.status(404).json({ message: "Product not found" });
-    }
+    const ownership = await ensureUserOwnsProduct(userId, productId);
+    if (!ownership.ok) return res.status(ownership.status).json({ message: ownership.message });
   }
 
   const post = await prisma.socialPost.update({

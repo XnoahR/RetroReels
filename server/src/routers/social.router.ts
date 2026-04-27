@@ -3,6 +3,8 @@ import {
   createSocialComment,
   createSocialPost,
   deleteSocialPost,
+  getSocialDiscovery,
+  getSocialPost,
   getSocialProfile,
   listSocialPosts,
   toggleSocialPostLike,
@@ -14,6 +16,8 @@ import { optionalAuth, requireAuth } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 router.get("/posts", optionalAuth, listSocialPosts);
+router.get("/discovery", optionalAuth, getSocialDiscovery);
+router.get("/posts/:postId", optionalAuth, getSocialPost);
 router.get("/profiles/:userId", optionalAuth, getSocialProfile);
 router.post("/uploads", requireAuth, uploadSocialImage);
 router.post("/posts", requireAuth, createSocialPost);

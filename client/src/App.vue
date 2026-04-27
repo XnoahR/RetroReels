@@ -2,7 +2,9 @@
 import { RouterView } from 'vue-router';
 import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import AppLoadingOverlay from '@/components/app/AppLoadingOverlay.vue';
 import PlayerView from '@/views/PlayerView.vue';
+import { appLoading, appLoadingMessage } from '@/stores/loading';
 
 const route = useRoute();
 const hasMountedPlayer = ref(false);
@@ -29,5 +31,6 @@ const shouldMountPersistentPlayer = computed(() => {
       <component v-if="route.name !== 'Player'" :is="Component" />
     </RouterView>
     <PlayerView v-if="shouldMountPersistentPlayer" v-show="route.name === 'Player'" />
+    <AppLoadingOverlay :visible="appLoading" :message="appLoadingMessage" />
   </main>
 </template>

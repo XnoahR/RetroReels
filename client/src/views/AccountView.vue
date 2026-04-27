@@ -55,7 +55,7 @@
               </div>
               <div class="p-3 text-center">
                 <p class="font-mono text-xl font-black">{{ profileProducts.length }}</p>
-                <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Selling</p>
+                <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Catalog</p>
               </div>
             </div>
           </div>
@@ -98,15 +98,58 @@
             <EmptyState v-if="!collection.length" class="sm:col-span-2" title="No public collection" :description="isOwnProfile ? 'Purchased music will appear in this collection tab.' : 'This profile does not expose a public music collection yet.'" />
           </section>
 
-          <section v-else-if="activeTab === 'selling'" class="space-y-3">
-            <RouterLink v-for="product in profileProducts" :key="product.id" :to="`/product/${product.id}`" class="music-card">
-              <img class="h-20 w-20 rounded object-cover" :src="product.image" :alt="`${product.title} cover`" />
-              <div class="min-w-0 flex-1">
-                <p class="truncate font-black text-white">{{ product.title }}</p>
-                <p class="truncate text-sm text-gray-400">{{ product.artist }} / {{ product.format || 'Music' }} / ${{ product.price }}</p>
+          <section v-else-if="activeTab === 'selling'" class="grid gap-4 sm:grid-cols-2">
+            <RouterLink v-for="product in profileProducts" :key="product.id" :to="`/product/${product.id}`" class="catalog-product-card group">
+              <div class="catalog-product-visual">
+                <div class="catalog-ambient"></div>
+                <div class="catalog-grid"></div>
+                <div class="catalog-vignette"></div>
+                <span class="catalog-format">{{ product.format || 'Music' }}</span>
+
+                <VinylAlbum
+                  v-if="product.format === 'Vinyl'"
+                  :title="product.title"
+                  :artist="product.artist"
+                  :image="product.image"
+                  class="scale-[0.72]"
+                />
+                <CassetteTape
+                  v-else-if="product.format === 'Cassette'"
+                  :title="product.title"
+                  :artist="product.artist"
+                  :image="product.image"
+                  :base-color="product.baseColor"
+                  class="scale-[0.72]"
+                />
+                <VhsTapeBox
+                  v-else
+                  :title="product.title"
+                  :artist="product.artist"
+                  :image="product.image"
+                  :base-color="product.baseColor"
+                  :border-color="product.borderColor"
+                  :disc-color="product.discColor"
+                  :side-color="product.sideColor"
+                  class="scale-[0.72]"
+                />
+              </div>
+
+              <div class="relative z-10 space-y-3 p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-xs font-bold uppercase tracking-[0.18em] text-gray-500">{{ product.artist }}</p>
+                    <h2 class="mt-1 line-clamp-2 font-black leading-tight text-white group-hover:text-serenade-200">{{ product.title }}</h2>
+                  </div>
+                  <span class="shrink-0 rounded border border-white/10 bg-white/[0.06] px-2 py-1 font-mono text-sm font-black text-serenade-200">${{ product.price }}</span>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="catalog-chip">{{ product.genre || 'Archive' }}</span>
+                  <span v-if="product.subGenre" class="catalog-chip muted">{{ product.subGenre }}</span>
+                </div>
               </div>
             </RouterLink>
-            <EmptyState v-if="!profileProducts.length" title="No music for sale" description="Products sold by this user will appear here." />
+            <EmptyState v-if="!profileProducts.length" class="sm:col-span-2" title="No catalog yet" description="Published music from this profile will appear here." />
           </section>
 
           <section v-else class="space-y-4">
@@ -120,11 +163,15 @@
 </template>
 
 <script setup>
-import { computed, defineComponent, h, onMounted, reactive, ref, watch } from 'vue';
-import { RouterLink, useRoute, useRouter } from 'vue-router';
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
+import { RouterLink, onBeforeRouteLeave, useRoute, useRouter } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
-import { ArrowLeft, Disc3, Heart, Library, MessageCircle, PenLine, Store } from 'lucide-vue-next';
+import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
+import VhsTapeBox from '@/components/catalog/media/VhsTapeBox.vue';
+import VinylAlbum from '@/components/catalog/media/VinylAlbum.vue';
+import { Archive, ArrowLeft, Disc3, Heart, Library, MessageCircle, PenLine } from 'lucide-vue-next';
+import { mergePostUpdates, postUpdatedEventName, readPostUpdates, writePostUpdate } from '@/utils/socialPostUpdates';
 
 const route = useRoute();
 const router = useRouter();
@@ -159,13 +206,20 @@ const alert = reactive({ message: '', type: 'success' });
 const tabs = [
   { id: 'posts', label: 'Posts', icon: PenLine },
   { id: 'collection', label: 'Collection', icon: Library },
-  { id: 'selling', label: 'Selling', icon: Store },
+  { id: 'selling', label: 'Catalog', icon: Archive },
   { id: 'liked', label: 'Liked', icon: Heart },
 ];
 
 const collection = computed(() => orders.value.filter((order) => order.product));
 const profilePosts = computed(() => socialPosts.value.filter((post) => post.user?.id === profileUser.id));
-const profileProducts = computed(() => publicProducts.value);
+const normalizeProduct = (product) => ({
+  ...product,
+  baseColor: product.vhsDesign?.baseColor || 'bg-zinc-950',
+  borderColor: product.vhsDesign?.borderColor || 'border-zinc-500',
+  discColor: product.vhsDesign?.discColor || 'bg-zinc-300',
+  sideColor: product.vhsDesign?.sideColor || 'bg-zinc-100',
+});
+const profileProducts = computed(() => publicProducts.value.map(normalizeProduct));
 const likedPosts = computed(() => profileLikedPosts.value);
 const isOwnProfile = computed(() => Boolean(currentUser.id && profileUser.id === currentUser.id));
 
@@ -182,6 +236,10 @@ const formatDate = (value) => {
   return new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(date);
 };
 
+const actionButtonClass = 'inline-flex h-9 items-center gap-[0.45rem] rounded-md px-3 text-sm font-extrabold text-gray-400 transition hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50';
+const ownerButtonClass = 'rounded border border-white/10 px-2 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-gray-400 transition hover:border-serenade-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-50';
+const dangerOwnerButtonClass = `${ownerButtonClass} hover:border-red-400/40 hover:bg-red-500/10 hover:text-red-200`;
+
 const EmptyState = defineComponent({
   props: {
     title: { type: String, required: true },
@@ -196,6 +254,13 @@ const EmptyState = defineComponent({
   },
 });
 
+const cacheProfileScroll = () => {
+  sessionStorage.setItem('accountProfileScroll', JSON.stringify({
+    path: route.fullPath,
+    scrollY: window.scrollY,
+  }));
+};
+
 const ProfilePost = defineComponent({
   props: {
     post: { type: Object, required: true },
@@ -205,7 +270,11 @@ const ProfilePost = defineComponent({
   setup(props, { emit }) {
     const isEditing = ref(false);
     const isBusy = ref(false);
+    const isDeleteModalOpen = ref(false);
+    const showComments = ref(false);
+    const commentDraft = ref('');
     const editBody = ref(props.post.body || '');
+    const isLoggedIn = computed(() => Boolean(localStorage.getItem('token')));
 
     const savePost = async () => {
       if (isBusy.value) return;
@@ -225,24 +294,70 @@ const ProfilePost = defineComponent({
       }
     };
 
-    const deletePost = async () => {
-      if (isBusy.value || !window.confirm('Delete this post?')) return;
+    const requestDeletePost = () => {
+      if (isBusy.value) return;
+      isDeleteModalOpen.value = true;
+    };
+
+    const cancelDeletePost = () => {
+      if (isBusy.value) return;
+      isDeleteModalOpen.value = false;
+    };
+
+    const confirmDeletePost = async () => {
+      if (isBusy.value) return;
       isBusy.value = true;
 
       try {
         await customFetch.delete(`social/posts/${props.post.id}`);
+        isDeleteModalOpen.value = false;
         emit('deleted', props.post.id);
       } finally {
         isBusy.value = false;
       }
     };
 
-    return () => h('article', { class: 'rounded-lg border border-white/10 bg-white/[0.035] p-4 sm:p-5' }, [
+    const toggleLike = async () => {
+      if (!isLoggedIn.value || isBusy.value) return;
+      isBusy.value = true;
+
+      try {
+        const response = await customFetch.post(`social/posts/${props.post.id}/like`);
+        emit('updated', response.data.data);
+      } finally {
+        isBusy.value = false;
+      }
+    };
+
+    const addComment = async () => {
+      const body = commentDraft.value.trim();
+      if (!isLoggedIn.value || isBusy.value || !body) return;
+      isBusy.value = true;
+
+      try {
+        const response = await customFetch.post(`social/posts/${props.post.id}/comments`, { body });
+        commentDraft.value = '';
+        showComments.value = true;
+        emit('updated', response.data.data);
+      } finally {
+        isBusy.value = false;
+      }
+    };
+
+    return () => [
+    h('article', {
+      class: 'cursor-pointer rounded-lg border border-white/10 bg-white/[0.035] p-4 shadow-lg shadow-black/10 transition hover:border-white/20 sm:p-5',
+      onClick: (event) => {
+        if (event.target.closest('a,button,input,textarea,select,label,form')) return;
+        cacheProfileScroll();
+        router.push(`/posts/${props.post.id}`);
+      },
+    }, [
       h('div', { class: 'flex gap-3' }, [
-        h(RouterLink, { to: `/profile/${props.post.user?.id}`, class: 'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded bg-serenade-500/15 text-sm font-black text-serenade-200' }, {
+        h(RouterLink, { to: `/profile/${props.post.user?.id}`, class: 'h-10 w-10 shrink-0 overflow-hidden rounded bg-serenade-500/15 text-sm font-black text-serenade-200' }, {
           default: () => props.post.user?.avatarUrl
             ? h('img', { class: 'h-full w-full object-cover', src: props.post.user.avatarUrl, alt: 'Profile' })
-            : initials(props.post.user?.name || props.post.user?.email || 'User'),
+            : h('span', { class: 'flex h-full w-full items-center justify-center' }, initials(props.post.user?.name || props.post.user?.email || 'User')),
         }),
         h('div', { class: 'min-w-0 flex-1' }, [
           h('div', { class: 'flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500' }, [
@@ -253,8 +368,8 @@ const ProfilePost = defineComponent({
             h('span', formatDate(props.post.createdAt)),
           ]),
           props.editable && h('div', { class: 'mt-2 flex gap-2' }, [
-            h('button', { class: 'owner-button', onClick: () => { editBody.value = props.post.body || ''; isEditing.value = true; } }, 'Edit'),
-            h('button', { class: 'owner-button danger', disabled: isBusy.value, onClick: deletePost }, 'Delete'),
+            h('button', { class: ownerButtonClass, onClick: () => { editBody.value = props.post.body || ''; isEditing.value = true; } }, 'Edit'),
+            h('button', { class: dangerOwnerButtonClass, disabled: isBusy.value, onClick: requestDeletePost }, 'Delete'),
           ]),
           isEditing.value
             ? h('div', { class: 'mt-3 space-y-3 rounded border border-white/10 bg-black/25 p-3' }, [
@@ -283,13 +398,83 @@ const ProfilePost = defineComponent({
               h('img', { class: 'aspect-[4/3] w-full object-cover', src: props.post.imageUrl, alt: 'Post attachment' }),
             ]),
           ]),
-          h('div', { class: 'mt-4 flex gap-4 text-sm font-bold text-gray-500' }, [
-            h('span', { class: 'inline-flex items-center gap-1' }, [h(Heart, { class: ['h-4 w-4', props.post.isLiked ? 'fill-serenade-300 text-serenade-300' : ''] }), props.post._count?.likes || 0]),
-            h('span', { class: 'inline-flex items-center gap-1' }, [h(MessageCircle, { class: 'h-4 w-4' }), props.post._count?.comments || 0]),
+          h('div', { class: 'mt-4 flex flex-wrap items-center gap-2 text-sm' }, [
+            h('button', {
+              type: 'button',
+              class: actionButtonClass,
+              disabled: !isLoggedIn.value || isBusy.value,
+              onClick: toggleLike,
+            }, [h(Heart, { class: ['h-4 w-4', props.post.isLiked ? 'fill-serenade-300 text-serenade-300' : ''] }), props.post._count?.likes || 0]),
+            h('button', {
+              type: 'button',
+              class: actionButtonClass,
+              onClick: () => { showComments.value = !showComments.value; },
+            }, [h(MessageCircle, { class: 'h-4 w-4' }), props.post._count?.comments || props.post.comments?.length || 0]),
+          ]),
+          showComments.value && h('div', { class: 'mt-4 space-y-3 rounded border border-white/10 bg-black/25 p-3' }, [
+            ...(props.post.comments || []).map((comment) => h('div', { key: comment.id, class: 'flex gap-3' }, [
+              h(RouterLink, { to: `/profile/${comment.user?.id}`, class: 'h-8 w-8 shrink-0 overflow-hidden rounded bg-white/10 text-xs font-black text-gray-300 transition hover:ring-2 hover:ring-serenade-500/40' }, {
+                default: () => comment.user?.avatarUrl
+                  ? h('img', { class: 'h-full w-full object-cover', src: comment.user.avatarUrl, alt: 'Profile' })
+                  : h('span', { class: 'flex h-full w-full items-center justify-center' }, initials(comment.user?.name || comment.user?.email || 'User')),
+              }),
+              h('div', { class: 'min-w-0' }, [
+                h(RouterLink, { to: `/profile/${comment.user?.id}`, class: 'text-xs font-black text-gray-500 transition hover:text-serenade-300' }, {
+                  default: () => comment.user?.name || comment.user?.email || 'Retro Listener',
+                }),
+                h('p', { class: 'mt-1 text-sm leading-5 text-gray-300' }, comment.body),
+              ]),
+            ])),
+            h('form', {
+              class: 'flex gap-2',
+              onSubmit: (event) => {
+                event.preventDefault();
+                addComment();
+              },
+            }, [
+              h('input', {
+                class: 'h-10 min-w-0 flex-1 rounded border border-white/10 bg-black/35 px-3 text-sm text-white outline-none placeholder:text-gray-600 focus:border-serenade-500/60',
+                placeholder: isLoggedIn.value ? 'Add a comment...' : 'Login to comment',
+                disabled: !isLoggedIn.value || isBusy.value,
+                value: commentDraft.value,
+                onInput: (event) => { commentDraft.value = event.target.value; },
+              }),
+              h('button', {
+                type: 'submit',
+                class: 'rounded bg-serenade-500 px-4 text-xs font-black uppercase tracking-widest text-black hover:bg-serenade-400 disabled:opacity-50',
+                disabled: !isLoggedIn.value || isBusy.value || !commentDraft.value.trim(),
+              }, 'Send'),
+            ]),
           ]),
         ]),
       ]),
-    ]);
+    ]),
+    isDeleteModalOpen.value && h('div', {
+      class: 'fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4',
+      onClick: (event) => {
+        if (event.target === event.currentTarget) cancelDeletePost();
+      },
+    }, [
+      h('section', { class: 'w-full max-w-sm rounded-lg border border-white/10 bg-shark-900 p-5 shadow-2xl shadow-black/50' }, [
+        h('h2', { class: 'text-lg font-black text-white' }, 'Delete post?'),
+        h('p', { class: 'mt-2 text-sm leading-6 text-gray-400' }, 'This post will be removed from the social wall and profile pages.'),
+        h('div', { class: 'mt-5 flex justify-end gap-2' }, [
+          h('button', {
+            type: 'button',
+            class: 'rounded border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-gray-300 hover:text-white',
+            disabled: isBusy.value,
+            onClick: cancelDeletePost,
+          }, 'Cancel'),
+          h('button', {
+            type: 'button',
+            class: 'rounded bg-red-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-white hover:bg-red-400 disabled:opacity-50',
+            disabled: isBusy.value,
+            onClick: confirmDeletePost,
+          }, 'Delete'),
+        ]),
+      ]),
+    ]),
+    ];
   },
 });
 
@@ -315,6 +500,46 @@ const setAlert = (message, type = 'success') => {
   }, 2600);
 };
 
+const restoreProfileScroll = async () => {
+  const rawState = sessionStorage.getItem('accountProfileScroll');
+  if (!rawState) return;
+
+  try {
+    const state = JSON.parse(rawState);
+    if (state.path !== route.fullPath || !Number.isFinite(Number(state.scrollY))) return;
+    const targetScroll = Number(state.scrollY);
+    const restore = () => window.scrollTo({ top: targetScroll, behavior: 'auto' });
+    await nextTick();
+    restore();
+    requestAnimationFrame(() => {
+      restore();
+      requestAnimationFrame(restore);
+    });
+    window.setTimeout(restore, 120);
+    window.setTimeout(() => {
+      restore();
+      sessionStorage.removeItem('accountProfileScroll');
+    }, 360);
+  } catch {
+    sessionStorage.removeItem('accountProfileScroll');
+  }
+};
+
+const applyCachedPostUpdates = () => {
+  const updates = readPostUpdates();
+  Object.values(updates).forEach(mergeUpdatedPost);
+};
+
+const mergeUpdatedPost = (updatedPost) => {
+  if (!updatedPost?.id) return;
+  socialPosts.value = socialPosts.value.map((post) => (post.id === updatedPost.id ? updatedPost : post));
+  profileLikedPosts.value = profileLikedPosts.value.map((post) => (post.id === updatedPost.id ? updatedPost : post));
+};
+
+const handlePostUpdated = (event) => {
+  mergeUpdatedPost(event.detail?.post);
+};
+
 const loadProfileData = async () => {
   try {
     let meRes = null;
@@ -333,24 +558,27 @@ const loadProfileData = async () => {
       router.push('/');
       return;
     }
-    const [profileRes, ordersRes, postsRes] = await Promise.all([
+    const [profileRes, ordersRes] = await Promise.all([
       customFetch.get(`social/profiles/${targetProfileId}`),
       route.params.id ? Promise.resolve({ data: { data: [] } }) : customFetch.get('orders'),
-      customFetch.get('social/posts'),
     ]);
 
     Object.assign(profileUser, profileRes.data.data.user);
     publicProducts.value = profileRes.data.data.products || [];
-    orders.value = ordersRes.data.data || [];
-    socialPosts.value = postsRes.data.data || [];
-    profileLikedPosts.value = profileRes.data.data.likedPosts || [];
+    orders.value = route.params.id ? profileRes.data.data.orders || [] : ordersRes.data.data || [];
+    socialPosts.value = mergePostUpdates(profileRes.data.data.posts || []);
+    profileLikedPosts.value = mergePostUpdates(profileRes.data.data.likedPosts || []);
+    applyCachedPostUpdates();
+    await restoreProfileScroll();
   } catch (error) {
     setAlert(error.response?.data?.message || 'Failed to load profile data', 'error');
   }
 };
 
 const updatePost = (nextPost) => {
+  writePostUpdate(nextPost);
   socialPosts.value = socialPosts.value.map((post) => (post.id === nextPost.id ? nextPost : post));
+  profileLikedPosts.value = profileLikedPosts.value.map((post) => (post.id === nextPost.id ? nextPost : post));
   setAlert('Post updated.');
 };
 
@@ -376,7 +604,22 @@ watch(
   },
 );
 
-onMounted(loadProfileData);
+onBeforeRouteLeave(() => {
+  cacheProfileScroll();
+});
+
+onMounted(() => {
+  loadProfileData();
+  window.addEventListener(postUpdatedEventName, handlePostUpdated);
+  window.addEventListener('focus', applyCachedPostUpdates);
+  document.addEventListener('visibilitychange', applyCachedPostUpdates);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener(postUpdatedEventName, handlePostUpdated);
+  window.removeEventListener('focus', applyCachedPostUpdates);
+  document.removeEventListener('visibilitychange', applyCachedPostUpdates);
+});
 </script>
 
 <style scoped>
@@ -420,27 +663,112 @@ onMounted(loadProfileData);
   background: rgba(255, 255, 255, 0.055);
 }
 
-.owner-button {
-  border-radius: 0.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.25rem 0.5rem;
-  font-size: 0.65rem;
+.catalog-product-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.24);
+  transition: transform 0.28s ease, border-color 0.28s ease, background-color 0.28s ease, box-shadow 0.28s ease;
+}
+
+.catalog-product-card:hover {
+  transform: translateY(-0.25rem);
+  border-color: rgba(245, 143, 66, 0.42);
+  background: rgba(255, 255, 255, 0.052);
+  box-shadow: 0 28px 60px rgba(0, 0, 0, 0.34), 0 0 28px rgba(245, 143, 66, 0.1);
+}
+
+.catalog-product-visual {
+  position: relative;
+  display: flex;
+  aspect-ratio: 4 / 3;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1b2027, #050607 50%, #12161a);
+}
+
+.catalog-ambient {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 0;
+  height: 16rem;
+  width: 16rem;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: rgba(245, 143, 66, 0.1);
+  filter: blur(70px);
+  pointer-events: none;
+  transition: transform 0.5s ease, background-color 0.5s ease;
+}
+
+.catalog-product-card:hover .catalog-ambient {
+  transform: translate(-50%, -50%) scale(1.12);
+  background: rgba(245, 143, 66, 0.18);
+}
+
+.catalog-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 1rem 1rem;
+  opacity: 0.28;
+  mask-image: radial-gradient(ellipse at center, black 50%, transparent 90%);
+}
+
+.catalog-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.9);
+}
+
+.catalog-format {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  z-index: 20;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.42);
+  padding: 0.25rem 0.65rem;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 0.62rem;
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgb(156 163 175);
-  transition: border-color 0.18s ease, color 0.18s ease, background-color 0.18s ease;
+  backdrop-filter: blur(8px);
 }
 
-.owner-button:hover:not(:disabled) {
-  border-color: rgba(245, 143, 66, 0.45);
-  color: white;
+.catalog-chip {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  border: 1px solid rgba(245, 143, 66, 0.42);
+  background: rgba(245, 143, 66, 0.1);
+  padding: 0.25rem 0.55rem;
+  color: #ffc18e;
+  font-size: 0.6rem;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.owner-button.danger:hover:not(:disabled) {
-  border-color: rgba(248, 113, 113, 0.45);
-  background: rgba(239, 68, 68, 0.1);
-  color: rgb(254, 202, 202);
+.catalog-chip.muted {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgb(156, 163, 175);
 }
 
 </style>

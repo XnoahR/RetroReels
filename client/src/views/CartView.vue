@@ -93,6 +93,8 @@ const checkoutCart = async () => {
   try {
     const { data } = await customFetch.post('cart/checkout');
     if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+    window.dispatchEvent(new CustomEvent('retro-reels:user-updated', { detail: { user: data.user } }));
+    window.dispatchEvent(new CustomEvent('retro-reels:library-updated'));
     await loadCart();
     setMessage('Checkout completed. Your music is now in Player.');
   } catch (error) {

@@ -484,7 +484,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
@@ -793,6 +793,11 @@ const loadLibrary = async () => {
   }
 };
 
+const handleLibraryUpdated = async () => {
+  await loadLibrary();
+  showLibraryNotice('Library updated.');
+};
+
 const createPlaylist = async () => {
   const name = newPlaylistName.value.trim();
   if (!name) return;
@@ -862,6 +867,7 @@ const selectPlaylist = (playlist) => {
 
 onMounted(() => {
   loadLibrary();
+  window.addEventListener('retro-reels:library-updated', handleLibraryUpdated);
   if (audioRef.value) {
     audioRef.value.volume = volume.value;
     audioRef.value.addEventListener("loadedmetadata", () => { durationMs.value = audioRef.value.duration; });
@@ -871,6 +877,10 @@ onMounted(() => {
     });
     audioRef.value.addEventListener("ended", () => { nextTrack(); });
   }
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('retro-reels:library-updated', handleLibraryUpdated);
 });
 </script>
 

@@ -260,7 +260,7 @@ const loadProduct = async () => {
   try {
     const requests = [
       customFetch.get(`products/${route.params.id}`),
-      customFetch.get('products'),
+      customFetch.get('products', { params: { skip: 0, take: 8 } }),
     ];
     if (localStorage.getItem('token')) requests.push(customFetch.get('orders'));
 
@@ -301,6 +301,8 @@ const buyNow = async () => {
   try {
     const { data } = await customFetch.post(`orders/buy/${product.value.id}`);
     if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+    window.dispatchEvent(new CustomEvent('retro-reels:user-updated', { detail: { user: data.user } }));
+    window.dispatchEvent(new CustomEvent('retro-reels:library-updated', { detail: { productId: product.value.id } }));
     ownedProductIds.value = new Set([...ownedProductIds.value, product.value.id]);
     showBuyModal.value = false;
     router.push({ name: 'Player' });

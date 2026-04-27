@@ -2,21 +2,22 @@
   <div
     class="vhs-shell"
     :class="[width, height, baseColor, borderColor, tapeRotation, hoverScale ? 'hover:scale-110' : '']"
+    :style="shellStyle"
     @mouseenter="hovering = true"
     @mouseleave="hovering = false"
   >
-    <div class="vhs-side vhs-side-left" :class="sideColor"></div>
-    <div class="vhs-side vhs-side-right" :class="sideColor"></div>
+    <div class="vhs-side vhs-side-left" :class="sideColor" :style="sideStyle"></div>
+    <div class="vhs-side vhs-side-right" :class="sideColor" :style="sideStyle"></div>
 
     <div class="vhs-top-ridge"></div>
     <div class="vhs-bottom-ridge"></div>
 
-    <div class="vhs-reel vhs-reel-left" :class="[discColor, hovering ? 'spin-left' : '']">
+    <div class="vhs-reel vhs-reel-left" :class="[discColor, hovering ? 'spin-left' : '']" :style="reelStyle">
       <div class="vhs-reel-ring"></div>
       <div class="vhs-reel-core"></div>
     </div>
 
-    <div class="vhs-reel vhs-reel-right" :class="[discColor, hovering ? 'spin-right' : '']">
+    <div class="vhs-reel vhs-reel-right" :class="[discColor, hovering ? 'spin-right' : '']" :style="reelStyle">
       <div class="vhs-reel-ring"></div>
       <div class="vhs-reel-core"></div>
     </div>
@@ -27,7 +28,7 @@
 
     <div class="vhs-label" :style="{ backgroundImage: `url(${image})` }">
       <div class="vhs-label-shade"></div>
-      <div class="vhs-title-strip" :class="[titleSize, titleBackgroundColor]">
+      <div class="vhs-title-strip" :class="[titleSize, titleBackgroundColor]" :style="titleStripStyle">
         <span :class="titleClass">{{ title }}</span>
       </div>
     </div>
@@ -36,6 +37,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { resolveTapeColor } from './tapeColors';
 
 const props = defineProps({
   title: { type: String, default: 'Default-Tape' },
@@ -60,6 +62,23 @@ const props = defineProps({
 });
 
 const hovering = ref(false);
+
+const shellStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.baseColor, '#111827'),
+  borderColor: resolveTapeColor(props.borderColor, '#9ca3af'),
+}));
+
+const sideStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.sideColor, '#374151'),
+}));
+
+const reelStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.discColor, '#111827'),
+}));
+
+const titleStripStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.titleBackgroundColor, '#4b5563'),
+}));
 
 const titleClass = computed(() => {
   if (props.title.length > 30) return 'vhs-title vhs-title-xs';

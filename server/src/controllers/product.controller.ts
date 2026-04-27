@@ -34,13 +34,31 @@ const getRequestUserId = (req: AuthenticatedRequest) => req.user?.id;
 
 export const listProducts = async (req: AuthenticatedRequest, res: Response) => {
   const includeUnpublished = req.user?.role === "ADMIN" && req.query.includeUnpublished === "true";
+  const skip = Math.max(Number(req.query.skip) || 0, 0);
+  const take = Math.min(Math.max(Number(req.query.take) || 16, 1), 40);
+  const shouldPage = req.query.skip !== undefined || req.query.take !== undefined;
+
   const products = await prisma.product.findMany({
     ...(includeUnpublished ? {} : { where: { isPublished: true } }),
     include: productInclude,
     orderBy: { createdAt: "desc" },
+    ...(shouldPage ? { skip, take: take + 1 } : {}),
   });
 
-  return res.json({ data: products });
+  if (!shouldPage) return res.json({ data: products });
+
+  const hasMore = products.length > take;
+  const page = hasMore ? products.slice(0, take) : products;
+
+  return res.json({
+    data: page,
+    pagination: {
+      skip,
+      take,
+      nextSkip: skip + page.length,
+      hasMore,
+    },
+  });
 };
 
 export const getProduct = async (req: AuthenticatedRequest, res: Response) => {

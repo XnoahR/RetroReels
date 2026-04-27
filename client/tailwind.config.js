@@ -2,6 +2,15 @@
 export default {
   darkMode: "class", // or 'media' if preferred
   content: ["./index.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
+  safelist: [
+    "bg-black",
+    "bg-red-500",
+    "bg-gray-500",
+    "border-white",
+    {
+      pattern: /^(bg|border)-(red|purple|sky|gray|bay-leaf|rose|pink|zinc|stone|orange|amber|slate|emerald|teal|cyan|fuchsia|lime|neutral|yellow|indigo|violet|green)-(100|200|300|400|500|700|800|900|950)$/,
+    },
+  ],
   theme: {
     extend: {
       fontSize:{
