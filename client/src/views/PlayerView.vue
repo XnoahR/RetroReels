@@ -758,16 +758,16 @@ const loadLibrary = async () => {
   try {
     const previousTrackId = currentTrack.value.id;
     const previousPlaylistId = selectedPlaylistId.value;
-    const [ordersRes, favoritesRes, playlistsRes] = await Promise.all([
-      customFetch.get('orders'),
+    const [libraryRes, favoritesRes, playlistsRes] = await Promise.all([
+      customFetch.get('orders/library'),
       customFetch.get('me/favorites'),
       customFetch.get('me/playlists'),
     ]);
 
-    const purchasedTracks = (ordersRes.data.data || [])
-      .map((order) => mapProductToTrack(order.product))
+    const libraryTracks = (libraryRes.data.data || [])
+      .map((item) => mapProductToTrack(item.product))
       .filter(Boolean);
-    const uniqueTracks = Array.from(new Map(purchasedTracks.map((track) => [track.id, track])).values());
+    const uniqueTracks = Array.from(new Map(libraryTracks.map((track) => [track.id, track])).values());
 
     originalTracks.value = uniqueTracks;
     tracks.value = [...uniqueTracks];

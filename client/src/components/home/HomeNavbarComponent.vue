@@ -55,6 +55,10 @@
               <UserRound class="h-4 w-4" />
               Profile
             </RouterLink>
+            <RouterLink class="menu-item" to="/studio" @click="isAccountMenuOpen = false">
+              <Radio class="h-4 w-4" />
+              Music Studio
+            </RouterLink>
             <RouterLink class="menu-item" to="/settings" @click="isAccountMenuOpen = false">
               <Settings class="h-4 w-4" />
               Settings
@@ -163,7 +167,7 @@ const routes = [
 
 const visibleRoutes = computed(() => {
   const authedRoutes = isLoggedIn.value
-    ? [...routes, { label: 'Player', to: '/player', icon: Radio }]
+    ? [...routes, { label: 'Player', to: '/player', icon: Radio }, { label: 'Studio', to: '/studio', icon: Gauge }]
     : routes;
 
   if (!isAdmin.value) return authedRoutes;

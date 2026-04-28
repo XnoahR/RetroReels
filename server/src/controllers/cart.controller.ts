@@ -40,8 +40,11 @@ export const addCartItem = async (req: AuthenticatedRequest, res: Response) => {
   if (!productId) return res.status(400).json({ message: "Product id is required" });
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
-  if (!product || !product.isPublished) {
+  if (!product || !product.isPublished || product.availability !== "AVAILABLE") {
     return res.status(404).json({ message: "Product not found" });
+  }
+  if (product.userId === userId) {
+    return res.status(409).json({ message: "Your own music is already in your library" });
   }
 
   const item = await prisma.cartItem.upsert({
@@ -90,7 +93,7 @@ export const checkoutCart = async (req: AuthenticatedRequest, res: Response) => 
   if (!userId) return res.status(401).json({ message: "Authentication required" });
 
   const items = await prisma.cartItem.findMany({
-    where: { userId },
+    where: { userId, product: { userId: { not: userId } } },
     include: { product: true },
   });
 

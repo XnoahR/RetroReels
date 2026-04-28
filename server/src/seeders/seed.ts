@@ -289,6 +289,83 @@ const seedSocialInteractions = async (getUser: (email: string) => User) => {
   }
 };
 
+const seedExclusiveFeature = async () => {
+  await prisma.exclusiveFeature.upsert({
+    where: { id: "seed-exclusive-party-anthem" },
+    update: {
+      productId: "19",
+      label: "Exclusive Premiere",
+      description: "A limited shelf feature for late-night listening, warm headphones, and one more rewind before the catalog opens.",
+      isActive: true,
+    },
+    create: {
+      id: "seed-exclusive-party-anthem",
+      productId: "19",
+      label: "Exclusive Premiere",
+      description: "A limited shelf feature for late-night listening, warm headphones, and one more rewind before the catalog opens.",
+      isActive: true,
+    },
+  });
+};
+
+const seedCarouselSlides = async () => {
+  const slides = [
+    ["seed-slide-party", "19", "No. 1 Party Anthem", "Exclusive indie-rock pressing for the late shelf.", "/no1partyanthem.png", "Listen Now", "/product/19", 1],
+    ["seed-slide-community", "4", "Community Uploads", "Approved studio drops can now become buyable catalog releases.", "/wallpaper-2.png", "Open Studio", "/studio", 2],
+    ["seed-slide-social", null, "Listening Wall", "See what the collectors are yapping about today.", "/wallpaper-3.png", "Join Social", "/timeline", 3],
+  ] as const;
+
+  for (const [id, productId, title, subtitle, image, ctaLabel, ctaHref, position] of slides) {
+    await prisma.carouselSlide.upsert({
+      where: { id },
+      update: { productId, title, subtitle, image, ctaLabel, ctaHref, position, isPublished: true },
+      create: { id, productId, title, subtitle, image, ctaLabel, ctaHref, position, isPublished: true },
+    });
+  }
+};
+
+const seedMusicSubmissions = async (getUser: (email: string) => User) => {
+  const submissions = [
+    ["seed-submission-dio-1", "dio@retroreels.test", "19", "Basement Party Recut", "Dio Drift", "Rock", "Vinyl", "/music/No. 1 Party Anthem.mp3", "/no1partyanthem.png", "Needs a quick loudness check before publishing.", "PENDING"],
+    ["seed-submission-sari-1", "sari@retroreels.test", "12", "Semua Tentangmu Soft Demo", "Sari Static", "Indo Pop", "Cassette", "/music/Hu Tao - Semua Tentangmu (Ai Cover) - 128.mp3", "/subaruhoshino.jpeg", "Cover image is final, audio may need cleaner intro trim.", "REVISION"],
+    ["seed-submission-beni-1", "beni@retroreels.test", "18", "VHS Memory Street", "Beni Bootleg", "Acoustic", "VHS", "/music/Somewhere Only We Know-Keane-Cover IA Hu Tao-Sub espaÃƒÂ±ol - 128.mp3", "/Yoru.jpeg", "Tape texture is intentional. Please review metadata.", "PENDING"],
+    ["seed-submission-mika-1", "mika@retroreels.test", "4", "Midnight ANRI Shelf Rip", "Mika Cassette", "City Pop", "Vinyl", "/music/ANRI - I Can't Stop The Loneliness - 128-1.mp3", "/her.jpg", "Approved for future city-pop collection feature.", "ACCEPTED"],
+  ] as const;
+
+  for (const [id, email, productId, title, artist, genre, format, audioUrl, coverUrl, note, status] of submissions) {
+    await prisma.musicSubmission.upsert({
+      where: { id },
+      update: {
+        userId: getUser(email).id,
+        productId,
+        title,
+        artist,
+        genre,
+        format,
+        audioUrl,
+        coverUrl,
+        note,
+        price: 20,
+        status,
+      },
+      create: {
+        id,
+        userId: getUser(email).id,
+        productId,
+        title,
+        artist,
+        genre,
+        format,
+        audioUrl,
+        coverUrl,
+        note,
+        price: 20,
+        status,
+      },
+    });
+  }
+};
+
 async function main() {
   console.log("Seeding users, VHS designs, catalog, purchases, and social posts...");
 
@@ -303,6 +380,9 @@ async function main() {
   await seedExtraSocialPosts(getUser);
   await seedRetroUserContent(getUser);
   await seedSocialInteractions(getUser);
+  await seedExclusiveFeature();
+  await seedCarouselSlides();
+  await seedMusicSubmissions(getUser);
 
   console.log("Seed complete.");
   console.log("Admin: admin@retroreels.test / password");

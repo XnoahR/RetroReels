@@ -87,11 +87,12 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import ExclusiveMusic from '@/components/home/ExclusiveMusic.vue';
 import HomeCarousel from '@/components/home/HomeCarousel.vue';
 import Catalog from '@/layouts/Catalog.vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
+import customFetch from '@/api';
 import { Maximize2, Minimize2, Pause, Play, Square, Volume2 } from 'lucide-vue-next';
 
 const catalogRef = ref(null);
@@ -105,7 +106,7 @@ const fallbackProduct = {
   image: '/Yoru.jpeg',
   duration: '0:00',
 };
-const exclusiveProduct = {
+const exclusiveProduct = ref({
   id: 19,
   title: 'No. 1 Party Anthem',
   artist: 'Arctic Monkeys',
@@ -114,7 +115,7 @@ const exclusiveProduct = {
   format: 'Vinyl',
   image: '/no1partyanthem.png',
   duration: '4:03',
-};
+});
 
 const player = reactive({
   product: null,
@@ -126,11 +127,11 @@ const player = reactive({
 });
 
 const displayedProduct = computed(() => player.product || fallbackProduct);
-const isExclusiveActive = computed(() => player.product?.id === exclusiveProduct.id);
+const isExclusiveActive = computed(() => player.product?.id === exclusiveProduct.value.id);
 const exclusiveCurrentLabel = computed(() => (isExclusiveActive.value ? formatTime(player.currentTime) : '0:00'));
 const exclusiveDurationLabel = computed(() => {
   if (isExclusiveActive.value && player.duration) return formatTime(player.duration);
-  return exclusiveProduct.duration;
+  return exclusiveProduct.value.duration;
 });
 const volumePercent = computed(() => Math.round(player.volume * 100));
 const volumeKnobAngle = computed(() => -135 + player.volume * 270);
@@ -150,7 +151,7 @@ const toggleCurrent = () => {
 };
 
 const toggleExclusive = () => {
-  catalogRef.value?.togglePreview(exclusiveProduct);
+  catalogRef.value?.togglePreview(exclusiveProduct.value);
 };
 
 const stopCurrent = () => {
@@ -222,6 +223,28 @@ const displayedDuration = computed(() => {
   if (player.duration) return formatTime(player.duration);
   return displayedProduct.value.duration;
 });
+
+const normalizeProduct = (product) => ({
+  ...product,
+  audio: product.track?.audioUrl || product.previewUrl || '',
+  baseColor: product.vhsDesign?.baseColor || 'bg-zinc-950',
+  borderColor: product.vhsDesign?.borderColor || 'border-zinc-500',
+  discColor: product.vhsDesign?.discColor || 'bg-zinc-300',
+  sideColor: product.vhsDesign?.sideColor || 'bg-zinc-100',
+});
+
+const loadExclusive = async () => {
+  try {
+    const { data } = await customFetch.get('admin/exclusive/current');
+    if (data.data?.product) {
+      exclusiveProduct.value = normalizeProduct(data.data.product);
+    }
+  } catch {
+    // Home can still render with the baked-in fallback exclusive.
+  }
+};
+
+onMounted(loadExclusive);
 </script>
 
 <style scoped>

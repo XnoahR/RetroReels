@@ -6,19 +6,19 @@
       :class="baseColor"
       :style="shellStyle"
     >
-      <div class="absolute inset-3 rounded-lg border border-white/25 bg-black/20"></div>
+      <div class="absolute inset-3 rounded-lg border bg-black/20" :class="borderColor" :style="borderStyle"></div>
 
-      <div class="absolute left-5 right-5 top-5 rounded-md border border-white/25 bg-white/90 px-4 py-3 text-center text-black">
+      <div class="absolute left-5 right-5 top-5 rounded-md border border-white/25 px-4 py-3 text-center text-black" :class="sideColor" :style="labelStyle">
         <p class="truncate text-xs font-black uppercase tracking-[0.2em]">{{ title }}</p>
         <p class="truncate text-tiny font-bold uppercase tracking-[0.18em] text-gray-600">{{ artist }}</p>
       </div>
 
       <div class="absolute inset-x-4 bottom-5 flex items-center justify-between rounded-full border-2 border-black/50 bg-black/40 px-3 py-2">
-        <div class="cassette-reel" :class="{ 'cassette-reel-active': active }">
+        <div class="cassette-reel" :class="[discColor, { 'cassette-reel-active': active }]" :style="reelStyle">
           <div></div>
         </div>
         <div class="h-3 w-10 shrink-0 rounded-full bg-black/70"></div>
-        <div class="cassette-reel" :class="{ 'cassette-reel-active': active }">
+        <div class="cassette-reel" :class="[discColor, { 'cassette-reel-active': active }]" :style="reelStyle">
           <div></div>
         </div>
       </div>
@@ -48,6 +48,9 @@ const props = defineProps({
   artist: { type: String, default: 'Unknown' },
   image: { type: String, default: '/Yoru.jpeg' },
   baseColor: { type: String, default: 'bg-serenade-700' },
+  borderColor: { type: String, default: 'border-white' },
+  discColor: { type: String, default: 'bg-zinc-950' },
+  sideColor: { type: String, default: 'bg-zinc-100' },
   active: { type: Boolean, default: false },
 });
 
@@ -75,6 +78,16 @@ const caseStyle = computed(() => ({
 
 const shellStyle = computed(() => ({
   backgroundColor: resolveTapeColor(props.baseColor, '#792d15'),
+  borderColor: resolveTapeColor(props.borderColor, 'rgba(255,255,255,0.7)'),
+}));
+const borderStyle = computed(() => ({
+  borderColor: resolveTapeColor(props.borderColor, 'rgba(255,255,255,0.7)'),
+}));
+const reelStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.discColor, '#111827'),
+}));
+const labelStyle = computed(() => ({
+  backgroundColor: resolveTapeColor(props.sideColor, '#f4f4f5'),
 }));
 
 const handleMouseEnter = () => {
@@ -232,7 +245,6 @@ const handleMouseLeave = () => {
   place-items: center;
   border-radius: 9999px;
   border: 3px solid rgba(255, 255, 255, 0.8);
-  background: #111;
 }
 
 .cassette-reel > div {

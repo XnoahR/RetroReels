@@ -61,6 +61,9 @@
                   :artist="product.artist"
                   :image="product.image"
                   :base-color="product.baseColor"
+                  :border-color="product.borderColor"
+                  :disc-color="product.discColor"
+                  :side-color="product.sideColor"
                   :active="activeProductId === product.id"
                 />
                 <VhsTapeBox

@@ -39,6 +39,8 @@ model User {
   socialPosts  SocialPost[]
   socialLikes  SocialPostLike[]
   socialComments SocialComment[]
+  musicSubmissions MusicSubmission[]
+  tapeDesigns TapeDesignPreset[]
 
   @@map("users")
 }
@@ -60,6 +62,7 @@ model Product {
   image       String
   previewUrl  String?
   isPublished Boolean   @default(true)
+  availability String   @default("AVAILABLE")
 
   user      User      @relation(fields: [userId], references: [id])
   vhsDesign VHSDesign @relation(fields: [designId], references: [id])
@@ -68,6 +71,8 @@ model Product {
   favorites Favorite[]
   playlistItems PlaylistItem[]
   carouselSlides CarouselSlide[]
+  exclusiveFeatures ExclusiveFeature[]
+  musicSubmissions MusicSubmission[]
   cartItems CartItem[]
   socialPosts SocialPost[]
 
@@ -75,6 +80,21 @@ model Product {
   updatedAt DateTime @updatedAt
 
   @@map("products")
+}
+
+model ExclusiveFeature {
+  id          String  @id @default(uuid())
+  productId   String
+  label       String  @default("Exclusive Premiere")
+  description String?
+  isActive    Boolean @default(true)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("exclusive_features")
 }
 
 model Track {
@@ -233,6 +253,60 @@ model SocialComment {
   updatedAt DateTime @updatedAt
 
   @@map("social_comments")
+}
+
+enum MusicSubmissionStatus {
+  PENDING
+  ACCEPTED
+  REVISION
+  REJECTED
+}
+
+model MusicSubmission {
+  id        String @id @default(uuid())
+  userId    String
+  productId String?
+
+  title      String
+  artist     String
+  genre      String?
+  format     String?
+  audioUrl   String
+  coverUrl   String?
+  note       String?
+  adminNote  String?
+  price      Int     @default(20)
+  status     MusicSubmissionStatus @default(PENDING)
+  baseColor  String?
+  borderColor String?
+  discColor  String?
+  sideColor  String?
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("music_submissions")
+}
+
+model TapeDesignPreset {
+  id        String  @id @default(uuid())
+  userId    String
+  name      String
+  baseColor String
+  borderColor String
+  discColor String
+  sideColor String
+  isPublic  Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("tape_design_presets")
 }
 
 model VHSDesign {

@@ -249,7 +249,7 @@ export const getSocialProfile = async (req: AuthenticatedRequest, res: Response)
       orderBy: { createdAt: "desc" },
     }),
     prisma.product.findMany({
-      where: { userId: profileUserId, isPublished: true },
+      where: { userId: profileUserId, isPublished: true, availability: "AVAILABLE" },
       include: {
         track: true,
         vhsDesign: true,

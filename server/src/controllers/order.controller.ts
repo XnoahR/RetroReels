@@ -8,11 +8,42 @@ export const listMyOrders = async (req: AuthenticatedRequest, res: Response) => 
 
   const orders = await prisma.order.findMany({
     ...(req.user?.role === "ADMIN" ? {} : { where: { userId } }),
-    include: { product: { include: { track: true, vhsDesign: true } } },
+    include: {
+      user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      product: { include: { track: true, vhsDesign: true, user: { select: { id: true, name: true, email: true } } } },
+    },
     orderBy: { createdAt: "desc" },
   });
 
   return res.json({ data: orders });
+};
+
+export const listMyLibrary = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: "Authentication required" });
+
+  const [orders, ownProducts] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId },
+      include: {
+        product: { include: { track: true, vhsDesign: true, user: { select: { id: true, name: true, email: true } } } },
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.product.findMany({
+      where: { userId, isPublished: true },
+      include: { track: true, vhsDesign: true, user: { select: { id: true, name: true, email: true } } },
+      orderBy: { updatedAt: "desc" },
+    }),
+  ]);
+
+  const purchasedItems = orders
+    .filter((order) => order.product)
+    .map((order) => ({ id: `order-${order.id}`, source: "PURCHASED", purchasedAt: order.createdAt, product: order.product }));
+  const ownItems = ownProducts.map((product) => ({ id: `created-${product.id}`, source: "CREATED", purchasedAt: product.updatedAt, product }));
+  const deduped = Array.from(new Map([...ownItems, ...purchasedItems].map((item) => [item.product.id, item])).values());
+
+  return res.json({ data: deduped });
 };
 
 export const buyProduct = async (req: AuthenticatedRequest, res: Response) => {
@@ -22,8 +53,11 @@ export const buyProduct = async (req: AuthenticatedRequest, res: Response) => {
   if (!productId) return res.status(400).json({ message: "Product id is required" });
 
   const product = await prisma.product.findUnique({ where: { id: productId } });
-  if (!product || !product.isPublished) {
+  if (!product || !product.isPublished || product.availability !== "AVAILABLE") {
     return res.status(404).json({ message: "Product not found" });
+  }
+  if (product.userId === userId) {
+    return res.status(409).json({ message: "Your own music is already in your library" });
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId } });

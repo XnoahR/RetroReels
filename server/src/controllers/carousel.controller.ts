@@ -22,7 +22,7 @@ export const createCarouselSlide = async (req: AuthenticatedRequest, res: Respon
 
   const slide = await prisma.carouselSlide.create({
     data: {
-      productId,
+      productId: productId || null,
       title,
       subtitle,
       image,
@@ -43,6 +43,7 @@ export const updateCarouselSlide = async (req: AuthenticatedRequest, res: Respon
   const { position, ...body } = req.body;
   const data: any = {
     ...body,
+    productId: body.productId || null,
     position: position === undefined ? undefined : Number(position),
   };
 

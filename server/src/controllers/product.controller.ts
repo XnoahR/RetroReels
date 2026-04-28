@@ -31,6 +31,26 @@ const ensureDefaultDesign = async () => {
 };
 
 const getRequestUserId = (req: AuthenticatedRequest) => req.user?.id;
+const sellableAvailability = ["AVAILABLE", "SOLD_OUT", "WITHDRAWN"];
+const getPagination = (req: AuthenticatedRequest, fallbackTake = 12) => {
+  const skip = Math.max(Number(req.query.skip) || 0, 0);
+  const take = Math.min(Math.max(Number(req.query.take) || fallbackTake, 1), 40);
+  return { skip, take };
+};
+
+const pagedResponse = <T>(items: T[], skip: number, take: number) => {
+  const hasMore = items.length > take;
+  const data = hasMore ? items.slice(0, take) : items;
+  return {
+    data,
+    pagination: {
+      skip,
+      take,
+      nextSkip: skip + data.length,
+      hasMore,
+    },
+  };
+};
 
 export const listProducts = async (req: AuthenticatedRequest, res: Response) => {
   const includeUnpublished = req.user?.role === "ADMIN" && req.query.includeUnpublished === "true";
@@ -39,9 +59,9 @@ export const listProducts = async (req: AuthenticatedRequest, res: Response) => 
   const shouldPage = req.query.skip !== undefined || req.query.take !== undefined;
 
   const products = await prisma.product.findMany({
-    ...(includeUnpublished ? {} : { where: { isPublished: true } }),
+    ...(includeUnpublished ? {} : { where: { isPublished: true, availability: "AVAILABLE" } }),
     include: productInclude,
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
     ...(shouldPage ? { skip, take: take + 1 } : {}),
   });
 
@@ -70,7 +90,7 @@ export const getProduct = async (req: AuthenticatedRequest, res: Response) => {
     include: productInclude,
   });
 
-  if (!product || (!product.isPublished && req.user?.role !== "ADMIN")) {
+  if (!product || ((!product.isPublished || product.availability !== "AVAILABLE") && req.user?.role !== "ADMIN" && product.userId !== req.user?.id)) {
     return res.status(404).json({ message: "Product not found" });
   }
 
@@ -96,6 +116,7 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response) =>
     audioUrl,
     designId,
     isPublished,
+    availability,
   } = req.body;
 
   if (!artist || !title || price === undefined || !description || !image) {
@@ -118,6 +139,7 @@ export const createProduct = async (req: AuthenticatedRequest, res: Response) =>
     image,
     previewUrl,
     isPublished: isPublished ?? true,
+    availability: availability || "AVAILABLE",
   };
 
   if (audioUrl) {
@@ -177,6 +199,80 @@ export const updateProduct = async (req: AuthenticatedRequest, res: Response) =>
   return res.json({ message: "Product updated", data: updated });
 };
 
+export const listMyProducts = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const { skip, take } = getPagination(req, 12);
+
+  const products = await prisma.product.findMany({
+    where: { userId },
+    include: {
+      ...productInclude,
+      _count: { select: { orders: true } },
+      musicSubmissions: true,
+    },
+    orderBy: { updatedAt: "desc" },
+    skip,
+    take: take + 1,
+  });
+
+  return res.json(pagedResponse(products, skip, take));
+};
+
+export const listMyProductSales = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: "Authentication required" });
+  const { skip, take } = getPagination(req, 10);
+
+  const where = { product: { userId } };
+  const [orders, totalOrders, revenue] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      include: {
+        user: { select: { id: true, name: true, email: true, avatarUrl: true } },
+        product: { include: { track: true, vhsDesign: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: take + 1,
+    }),
+    prisma.order.count({ where }),
+    prisma.order.aggregate({ where, _sum: { price: true } }),
+  ]);
+
+  return res.json({
+    ...pagedResponse(orders, skip, take),
+    summary: { revenue: revenue._sum.price || 0, orders: totalOrders },
+  });
+};
+
+export const updateProductAvailability = async (req: AuthenticatedRequest, res: Response) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ message: "Product id is required" });
+
+  const product = await prisma.product.findUnique({ where: { id } });
+  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (req.user?.role !== "ADMIN" && product.userId !== req.user?.id) {
+    return res.status(403).json({ message: "You can only manage your own music" });
+  }
+
+  const availability = String(req.body.availability || "").toUpperCase();
+  if (!sellableAvailability.includes(availability)) {
+    return res.status(400).json({ message: "availability must be AVAILABLE, SOLD_OUT, or WITHDRAWN" });
+  }
+
+  const updated = await prisma.product.update({
+    where: { id },
+    data: {
+      availability,
+      isPublished: availability === "AVAILABLE",
+    },
+    include: productInclude,
+  });
+
+  return res.json({ message: "Product availability updated", data: updated });
+};
+
 export const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ message: "Product id is required" });
@@ -186,6 +282,11 @@ export const deleteProduct = async (req: AuthenticatedRequest, res: Response) =>
 
   if (req.user?.role !== "ADMIN" && product.userId !== req.user?.id) {
     return res.status(403).json({ message: "You can only delete your own products" });
+  }
+
+  const orderCount = await prisma.order.count({ where: { productId: id } });
+  if (orderCount > 0) {
+    return res.status(409).json({ message: "Music with buyers cannot be deleted. Mark it sold out or withdrawn instead." });
   }
 
   await prisma.product.delete({ where: { id } });

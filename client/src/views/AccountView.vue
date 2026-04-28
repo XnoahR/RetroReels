@@ -119,6 +119,9 @@
                   :artist="product.artist"
                   :image="product.image"
                   :base-color="product.baseColor"
+                  :border-color="product.borderColor"
+                  :disc-color="product.discColor"
+                  :side-color="product.sideColor"
                   class="scale-[0.72]"
                 />
                 <VhsTapeBox
@@ -560,7 +563,7 @@ const loadProfileData = async () => {
     }
     const [profileRes, ordersRes] = await Promise.all([
       customFetch.get(`social/profiles/${targetProfileId}`),
-      route.params.id ? Promise.resolve({ data: { data: [] } }) : customFetch.get('orders'),
+      route.params.id ? Promise.resolve({ data: { data: [] } }) : customFetch.get('orders/library'),
     ]);
 
     Object.assign(profileUser, profileRes.data.data.user);

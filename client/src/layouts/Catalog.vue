@@ -179,6 +179,9 @@
                 :artist="product.artist"
                 :image="product.image"
                 :base-color="product.baseColor"
+                :border-color="product.borderColor"
+                :disc-color="product.discColor"
+                :side-color="product.sideColor"
                 :active="activeProduct === product.id"
               />
               <VhsTapeBox
@@ -368,6 +371,7 @@ const productPageSize = 12;
 const activeProduct = ref(null);
 const cartMessage = ref('');
 const ownedProductIds = ref(new Set());
+const currentUserId = ref('');
 const pendingPurchase = ref(null);
 const currentProductId = ref('');
 const isCurrentAudioPlaying = ref(false);
@@ -464,18 +468,21 @@ const setupLoadMoreObserver = () => {
 const loadOwnedProducts = async () => {
   if (!localStorage.getItem('token')) {
     ownedProductIds.value = new Set();
+    currentUserId.value = '';
     return;
   }
 
   try {
-    const { data } = await customFetch.get('orders');
-    ownedProductIds.value = new Set((data.data || []).map((order) => order.productId));
+    const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    currentUserId.value = cachedUser.id || '';
+    const { data } = await customFetch.get('orders/library');
+    ownedProductIds.value = new Set((data.data || []).map((item) => item.product?.id).filter(Boolean));
   } catch {
     ownedProductIds.value = new Set();
   }
 };
 
-const isOwned = (product) => ownedProductIds.value.has(product.id);
+const isOwned = (product) => ownedProductIds.value.has(product.id) || Boolean(currentUserId.value && product.userId === currentUserId.value);
 
 const goToProduct = (id) => {
   router.push({ name: 'ProductDetail', params: { id } });
@@ -496,6 +503,10 @@ const showCartMessage = (message) => {
 
 const addToCart = async (product) => {
   if (!requireLogin()) return;
+  if (isOwned(product)) {
+    showCartMessage(`${product.title} is already in your library.`);
+    return;
+  }
 
   try {
     await customFetch.post(`cart/${product.id}`);
@@ -507,6 +518,10 @@ const addToCart = async (product) => {
 
 const openBuyModal = (product) => {
   if (!requireLogin()) return;
+  if (isOwned(product)) {
+    showCartMessage(`${product.title} is already in your library.`);
+    return;
+  }
   pendingPurchase.value = product;
 };
 

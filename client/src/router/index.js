@@ -102,6 +102,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/studio',
+      name: 'MusicStudio',
+      component: () => import('../views/MusicStudioView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin',
       name: 'Admin',
       component: () => import('../views/AdminDashboardView.vue'),
