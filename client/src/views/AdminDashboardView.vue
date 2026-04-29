@@ -18,20 +18,35 @@
           {{ alert.message }}
         </p>
 
-        <div class="mb-6 grid gap-4 md:grid-cols-3">
+        <div v-if="isLoading" class="mb-6 grid gap-4 md:grid-cols-3">
+          <div v-for="i in 3" :key="i" class="skeleton h-24 rounded-lg"></div>
+        </div>
+        <div v-else class="mb-6 grid gap-4 md:grid-cols-3">
           <div class="metric"><Images class="h-5 w-5 text-sky-300" /><span>Slides</span><strong>{{ slides.length }}</strong></div>
           <div class="metric"><Star class="h-5 w-5 text-serenade-300" /><span>Exclusive</span><strong>{{ exclusiveFeatures.length }}</strong></div>
           <div class="metric"><UploadCloud class="h-5 w-5 text-violet-300" /><span>Pending</span><strong>{{ pendingSubmissions }}</strong></div>
         </div>
 
-        <nav class="mb-6 flex gap-2 overflow-x-auto rounded-lg border border-white/10 bg-black/25 p-2">
+        <nav v-if="!isLoading" class="mb-6 flex gap-2 overflow-x-auto rounded-lg border border-white/10 bg-black/25 p-2">
           <button v-for="tab in tabs" :key="tab.id" class="tab-button" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
             <component :is="tab.icon" class="h-4 w-4" />
             {{ tab.label }}
           </button>
         </nav>
 
-        <section v-if="activeTab === 'carousel'" class="grid gap-6 xl:grid-cols-[1fr_24rem]">
+        <template v-if="isLoading">
+          <div class="grid gap-6 xl:grid-cols-[1fr_24rem]">
+            <div class="panel">
+              <div class="mb-5"><p class="eyebrow">Loading...</p><h2 class="section-title"><span class="skeleton inline-block h-6 w-32"></span></h2></div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div v-for="i in 4" :key="i" class="skeleton h-64 rounded-lg"></div>
+              </div>
+            </div>
+            <div class="panel"><div class="skeleton h-8 w-24 mb-5"></div><div v-for="i in 4" :key="i" class="skeleton h-10 mb-4"></div></div>
+          </div>
+        </template>
+
+        <section v-else-if="activeTab === 'carousel'" class="grid gap-6 xl:grid-cols-[1fr_24rem]">
           <div class="panel">
             <div class="mb-5"><p class="eyebrow">Carousel</p><h2 class="section-title">Slides</h2></div>
             <div class="grid gap-4 md:grid-cols-2">
@@ -156,6 +171,21 @@
           </div>
         </section>
 
+        <section v-else-if="activeTab === 'analytics'" class="grid gap-6 lg:grid-cols-2">
+          <div class="panel">
+            <div class="mb-5"><p class="eyebrow">Revenue</p><h2 class="section-title">Monthly Sales</h2></div>
+            <RevenueChart :data="analyticsData.revenue" />
+          </div>
+          <div class="panel">
+            <div class="mb-5"><p class="eyebrow">Catalog</p><h2 class="section-title">Genres</h2></div>
+            <GenreChart :data="analyticsData.genres" />
+          </div>
+          <div class="panel lg:col-span-2">
+            <div class="mb-5"><p class="eyebrow">Distribution</p><h2 class="section-title">Sales by Format</h2></div>
+            <FormatChart :data="analyticsData.formats" />
+          </div>
+        </section>
+
       </div>
     </section>
   </HomeLayout>
@@ -165,7 +195,10 @@
 import { computed, defineComponent, h, onMounted, reactive, ref } from 'vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
-import { Images, Plus, RefreshCw, Star, Trash2, UploadCloud } from 'lucide-vue-next';
+import { BarChart3, Images, Plus, RefreshCw, Star, Trash2, UploadCloud } from 'lucide-vue-next';
+import RevenueChart from '@/components/admin/RevenueChart.vue';
+import GenreChart from '@/components/admin/GenreChart.vue';
+import FormatChart from '@/components/admin/FormatChart.vue';
 
 const StatusBadge = defineComponent({
   props: { active: Boolean, activeLabel: String, inactiveLabel: String },
@@ -181,9 +214,11 @@ const tabs = [
   { id: 'carousel', label: 'Carousel', icon: Images },
   { id: 'exclusive', label: 'Exclusive', icon: Star },
   { id: 'submissions', label: 'Upload Review', icon: UploadCloud },
+  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
 const activeTab = ref('carousel');
+const isLoading = ref(true);
 const products = ref([]);
 const slides = ref([]);
 const exclusiveFeatures = ref([]);
@@ -196,6 +231,8 @@ const alert = reactive({ message: '', type: 'success' });
 const createSlideForm = reactive({ title: '', image: '/wallpaper-1.png', position: 0, isPublished: true });
 const editSlideForm = reactive({ title: '', image: '/wallpaper-1.png', position: 0, isPublished: true });
 const exclusiveForm = reactive({ productId: '', label: 'Exclusive Premiere', description: '', isActive: true });
+
+const analyticsData = reactive({ revenue: [], genres: [], formats: [] });
 
 const pendingSubmissions = computed(() => submissions.value.filter((item) => item.status === 'PENDING').length);
 
@@ -218,17 +255,25 @@ const loadMoreSubmissions = async () => {
 
 const loadDashboard = async () => {
   try {
-    const [productsRes, slidesRes, exclusiveRes] = await Promise.all([
+    isLoading.value = true;
+    const [productsRes, slidesRes, exclusiveRes, analyticsRes] = await Promise.all([
       customFetch.get('products?includeUnpublished=true'),
       customFetch.get('carousel?includeUnpublished=true'),
       customFetch.get('admin/exclusive'),
+      customFetch.get('admin/analytics'),
     ]);
     products.value = productsRes.data.data || [];
     slides.value = slidesRes.data.data || [];
     exclusiveFeatures.value = exclusiveRes.data.data || [];
+    const analytics = analyticsRes.data.data || {};
+    analyticsData.revenue = analytics.revenue || [];
+    analyticsData.genres = analytics.genres || [];
+    analyticsData.formats = analytics.formats || [];
     await loadSubmissions();
   } catch (error) {
     setAlert(error.response?.data?.message || 'Failed to load dashboard', 'error');
+  } finally {
+    isLoading.value = false;
   }
 };
 

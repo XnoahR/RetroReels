@@ -148,7 +148,9 @@
           </p>
 
           <section class="space-y-4">
-            <div v-if="isLoading" class="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center font-mono text-xs uppercase tracking-widest text-gray-500">Loading wall...</div>
+            <template v-if="isLoading">
+              <div v-for="i in 5" :key="i" class="skeleton h-32 rounded-lg"></div>
+            </template>
             <div v-else-if="posts.length === 0" class="rounded-lg border border-white/10 bg-white/[0.035] p-8 text-center font-mono text-xs uppercase tracking-widest text-gray-500">No posts yet.</div>
 
             <template v-else>

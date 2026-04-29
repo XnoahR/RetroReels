@@ -22,6 +22,21 @@
           <div class="metric queue"><span>Review Queue</span><strong>{{ pendingSubmissions.length }}</strong></div>
         </div>
 
+        <div class="mb-6 grid gap-6 lg:grid-cols-2">
+          <div class="panel">
+            <div class="mb-5"><p class="eyebrow">Revenue</p><h2 class="section-title">Monthly Sales</h2></div>
+            <RevenueChart :data="studioAnalytics.revenue" />
+          </div>
+          <div class="panel">
+            <div class="mb-5"><p class="eyebrow">Catalog</p><h2 class="section-title">Genres</h2></div>
+            <GenreChart :data="studioAnalytics.genres" />
+          </div>
+          <div class="panel lg:col-span-2">
+            <div class="mb-5"><p class="eyebrow">Distribution</p><h2 class="section-title">Sales by Format</h2></div>
+            <FormatChart :data="studioAnalytics.formats" />
+          </div>
+        </div>
+
         <nav class="studio-tabs mb-6">
           <button v-for="tab in studioTabs" :key="tab.id" class="tab-button" :class="{ active: activeTab === tab.id }" @click="activeTab = tab.id">
             {{ tab.label }}
@@ -347,6 +362,9 @@ import customFetch from '@/api';
 import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
 import DiscTape from '@/components/catalog/media/DiscTape.vue';
 import { resolveTapeColor } from '@/components/catalog/media/tapeColors';
+import RevenueChart from '@/components/admin/RevenueChart.vue';
+import GenreChart from '@/components/admin/GenreChart.vue';
+import FormatChart from '@/components/admin/FormatChart.vue';
 
 const studioTabs = [
   { id: 'catalog', label: 'Catalog' },
@@ -415,6 +433,7 @@ const catalogHasMore = ref(false);
 const submissionsHasMore = ref(false);
 const salesHasMore = ref(false);
 const salesSummary = reactive({ revenue: 0, orders: 0 });
+const studioAnalytics = reactive({ revenue: [], genres: [], formats: [] });
 const alert = reactive({ message: '', type: 'success' });
 const editingSubmissionId = ref('');
 const isUploadModalOpen = ref(false);
@@ -644,16 +663,21 @@ const applySalesPage = (response, append = false) => {
 
 const loadStudio = async () => {
   try {
-    const [catalogRes, submissionsRes, salesRes, designsRes] = await Promise.all([
+    const [catalogRes, submissionsRes, salesRes, designsRes, analyticsRes] = await Promise.all([
       customFetch.get('products/me/catalog', { params: { skip: 0, take: 12 } }),
       customFetch.get('music-submissions/me', { params: { skip: 0, take: 12 } }),
       customFetch.get('products/me/sales', { params: { skip: 0, take: 10 } }),
       customFetch.get('vhs/presets/me', { headers: { 'x-skip-loader': 'true' } }),
+      customFetch.get('products/me/analytics', { headers: { 'x-skip-loader': 'true' } }),
     ]);
     applyCatalogPage(catalogRes);
     applySubmissionsPage(submissionsRes);
     applySalesPage(salesRes);
     savedDesigns.value = designsRes.data.data || [];
+    const analytics = analyticsRes.data.data || {};
+    studioAnalytics.revenue = analytics.revenue || [];
+    studioAnalytics.genres = analytics.genres || [];
+    studioAnalytics.formats = analytics.formats || [];
   } catch (error) {
     setAlert(error.response?.data?.message || 'Failed to load studio', 'error');
   }

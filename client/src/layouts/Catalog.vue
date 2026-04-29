@@ -126,17 +126,18 @@
         </div>
 
         <div class="grid grid-cols-1 gap-5 pb-40 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          <p v-if="isLoadingProducts" class="col-span-full rounded-xl border border-white/5 bg-black/20 p-8 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
-            Loading catalog...
-          </p>
+          <template v-if="isLoadingProducts">
+            <SkeletonCard v-for="i in 8" :key="i" variant="grid" />
+          </template>
           <p v-else-if="!filteredProducts.length" class="col-span-full rounded-xl border border-white/5 bg-black/20 p-8 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
             Catalog is empty. Run the server seed to import products.
           </p>
           <article
-            v-for="product in filteredProducts"
+            v-for="(product, index) in filteredProducts"
             :key="product.id"
-            class="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] shadow-2xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:border-white/10 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] cursor-pointer"
-            :class="activeProduct === product.id ? 'is-playing border-serenade-400/50 shadow-[0_0_30px_rgba(242,112,29,0.2)]' : ''"
+            :ref="(el) => setCardRef(el, product.id)"
+            class="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.02] shadow-2xl backdrop-blur-xl transition-all duration-500 hover:-translate-y-2 hover:border-white/10 hover:bg-white/[0.04] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.8)] cursor-pointer card-reveal"
+            :class="[activeProduct === product.id ? 'is-playing border-serenade-400/50 shadow-[0_0_30px_rgba(242,112,29,0.2)]' : '', visibleCards.has(product.id) ? 'card-visible' : '']"
             @click="goToProduct(product.id)"
           >
             <!-- Media Stage -->
@@ -351,6 +352,7 @@ import CatalogHighlights from '@/components/catalog/CatalogHighlights.vue';
 import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
 import VhsTapeBox from '@/components/catalog/media/VhsTapeBox.vue';
 import VinylAlbum from '@/components/catalog/media/VinylAlbum.vue';
+import SkeletonCard from '@/components/common/SkeletonCard.vue';
 import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/stores/player';
 
 const emit = defineEmits(['player-state']);
@@ -385,7 +387,19 @@ const currentTime = ref(0);
 const audioById = new Map();
 const progressById = reactive({});
 const durationById = reactive({});
+const visibleCards = ref(new Set());
 let loadMoreObserver = null;
+let cardObserver = null;
+const cardRefs = new Map();
+
+const setCardRef = (el, id) => {
+  if (el) {
+    cardRefs.set(id, el);
+    if (cardObserver) cardObserver.observe(el);
+  } else {
+    cardRefs.delete(id);
+  }
+};
 
 const setAudioRef = (el, id) => {
   if (el) {
@@ -512,6 +526,7 @@ const loadOwnedProducts = async () => {
 const isOwned = (product) => ownedProductIds.value.has(product.id) || Boolean(currentUserId.value && product.userId === currentUserId.value);
 
 const goToProduct = (id) => {
+  sessionStorage.setItem('homeScroll', String(window.scrollY));
   router.push({ name: 'ProductDetail', params: { id } });
 };
 
@@ -686,6 +701,16 @@ watch([search, selectedGenre, selectedFormats, sortBy], () => {
   nextTick(setupLoadMoreObserver);
 }, { deep: true });
 
+watch(products, async () => {
+  await nextTick();
+  cardRefs.forEach((el, id) => {
+    if (el && !el.dataset.cardId) {
+      el.dataset.cardId = id;
+      cardObserver?.observe(el);
+    }
+  });
+}, { deep: true });
+
 const currentProduct = computed(() => products.value.find((product) => product.id === currentProductId.value));
 
 const genres = computed(() => ['All', ...new Set(products.value.map((product) => product.genre).filter(Boolean))]);
@@ -760,10 +785,34 @@ onMounted(async () => {
   await loadHomeSections();
   await loadOwnedProducts();
   emitPlayerState();
+
+  const savedScroll = sessionStorage.getItem('homeScroll');
+  if (savedScroll) {
+    await nextTick();
+    window.scrollTo({ top: Number(savedScroll), behavior: 'instant' });
+    sessionStorage.removeItem('homeScroll');
+  }
+
+  cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const id = entry.target.dataset.cardId;
+        if (id) visibleCards.value.add(id);
+        cardObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  await nextTick();
+  cardRefs.forEach((el, id) => {
+    el.dataset.cardId = id;
+    cardObserver.observe(el);
+  });
 });
 
 onBeforeUnmount(() => {
   loadMoreObserver?.disconnect();
+  cardObserver?.disconnect();
 });
 
 defineExpose({
@@ -1005,6 +1054,17 @@ const formatTagClass = (format) => {
   .filter-panel-leave-from {
     flex-basis: auto;
   }
+}
+
+.card-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1), transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.card-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 </style>
 

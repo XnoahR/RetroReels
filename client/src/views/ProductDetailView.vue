@@ -1,8 +1,11 @@
 <template>
   <HomeLayout>
     <section class="min-h-screen bg-shark-950 pt-24 pb-32 px-4 sm:px-6 lg:px-8 text-white relative overflow-hidden overflow-x-hidden">
-      <div v-if="isLoading" class="mx-auto max-w-3xl rounded-xl border border-white/5 bg-black/30 p-10 text-center text-sm font-bold uppercase tracking-widest text-gray-400">
-        Loading product...
+      <div v-if="isLoading" class="mx-auto max-w-3xl space-y-6">
+        <div class="skeleton aspect-video rounded-xl"></div>
+        <div class="skeleton h-10 w-3/4 rounded"></div>
+        <div class="skeleton h-6 w-1/2 rounded"></div>
+        <div class="skeleton h-24 w-full rounded-xl"></div>
       </div>
       <div v-else-if="errorMessage" class="mx-auto max-w-3xl rounded-xl border border-red-400/30 bg-red-500/10 p-10 text-center text-sm font-bold uppercase tracking-widest text-red-200">
         {{ errorMessage }}

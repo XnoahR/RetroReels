@@ -87,7 +87,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, onBeforeUnmount, reactive, ref } from 'vue';
+import { onBeforeRouteLeave } from 'vue-router';
 import ExclusiveMusic from '@/components/home/ExclusiveMusic.vue';
 import HomeCarousel from '@/components/home/HomeCarousel.vue';
 import Catalog from '@/layouts/Catalog.vue';
@@ -246,6 +247,12 @@ const loadExclusive = async () => {
 onMounted(async () => {
   await loadPlayerVolume();
   loadExclusive();
+});
+
+onBeforeRouteLeave((to) => {
+  if (to.name === 'ProductDetail') {
+    sessionStorage.setItem('homeScroll', String(window.scrollY));
+  }
 });
 </script>
 

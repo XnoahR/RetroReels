@@ -482,3 +482,57 @@ export const discoverProducts = async (req: AuthenticatedRequest, res: Response)
     },
   });
 };
+
+export const getMyAnalytics = async (req: AuthenticatedRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ message: "Authentication required" });
+
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const [orders, products] = await Promise.all([
+    prisma.order.findMany({
+      where: { product: { userId }, createdAt: { gte: sixMonthsAgo } },
+      orderBy: { createdAt: "asc" },
+      include: { product: { select: { genre: true, format: true } } },
+    }),
+    prisma.product.findMany({
+      where: { userId, isPublished: true },
+      select: { genre: true, format: true },
+    }),
+  ]);
+
+  const monthlyRevenue = new Map<string, number>();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    monthlyRevenue.set(d.toLocaleString("default", { month: "short" }), 0);
+  }
+
+  for (const order of orders) {
+    const month = order.createdAt.toLocaleString("default", { month: "short" });
+    monthlyRevenue.set(month, (monthlyRevenue.get(month) || 0) + order.price);
+  }
+
+  const genreCounts = new Map<string, number>();
+  const formatCounts = new Map<string, number>();
+
+  for (const product of products) {
+    if (product.genre) {
+      genreCounts.set(product.genre, (genreCounts.get(product.genre) || 0) + 1);
+    }
+    if (product.format) {
+      formatCounts.set(product.format, (formatCounts.get(product.format) || 0) + 1);
+    }
+  }
+
+  return res.json({
+    data: {
+      revenue: Array.from(monthlyRevenue.entries()).map(([label, value]) => ({ label, value })),
+      genres: Array.from(genreCounts.entries())
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6),
+      formats: Array.from(formatCounts.entries()).map(([label, value]) => ({ label, value })),
+    },
+  });
+};

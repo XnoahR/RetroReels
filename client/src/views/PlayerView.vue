@@ -96,19 +96,22 @@
               </button>
            </div>
 
-           <div v-if="activeTab === 'favorites' || openedLibraryId">
-           <div v-if="displayedTracks.length === 0" class="py-12 text-center">
-              <p class="text-gray-500 font-mono tracking-widest uppercase">{{ libraryMessage }}</p>
-           </div>
+            <div v-if="activeTab === 'favorites' || openedLibraryId">
+            <template v-if="displayedTracks.length === 0 && !isLoadingLibrary">
+               <p class="py-12 text-center text-gray-500 font-mono tracking-widest uppercase">{{ libraryMessage }}</p>
+            </template>
 
-           <!-- Grid View -->
-           <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              <div 
-                v-for="track in displayedTracks" :key="track.id"
-                @click="playTrack(track)"
-                class="group relative overflow-hidden rounded-2xl border border-white/5 bg-shark-900 transition-all hover:-translate-y-1 hover:border-serenade-500/50 hover:shadow-xl hover:shadow-serenade-500/10 cursor-pointer"
-                :class="{ 'border-serenade-500 shadow-lg shadow-serenade-500/20': currentTrack.id === track.id }"
-              >
+            <!-- Grid View -->
+            <div v-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+               <template v-if="isLoadingLibrary">
+                 <div v-for="i in 10" :key="i" class="skeleton aspect-square rounded-2xl"></div>
+               </template>
+               <div 
+                 v-for="track in displayedTracks" :key="track.id"
+                 @click="playTrack(track)"
+                 class="group relative overflow-hidden rounded-2xl border border-white/5 bg-shark-900 transition-all hover:-translate-y-1 hover:border-serenade-500/50 hover:shadow-xl hover:shadow-serenade-500/10 cursor-pointer"
+                 :class="{ 'border-serenade-500 shadow-lg shadow-serenade-500/20': currentTrack.id === track.id }"
+               >
                 <div class="aspect-square overflow-hidden bg-shark-950 relative">
                    <img :src="track.image" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100" />
                    <div v-if="currentTrack.id === track.id" class="absolute inset-0 bg-serenade-500/20 backdrop-blur-[1px] flex items-center justify-center">
@@ -139,14 +142,17 @@
               </div>
            </div>
 
-           <!-- List View (Mini List) -->
-           <div v-if="viewMode === 'list'" class="flex flex-col gap-2">
-              <div 
-                v-for="track in displayedTracks" :key="track.id"
-                @click="playTrack(track)"
-                class="group flex items-center gap-4 p-3 rounded-xl border border-white/5 bg-shark-900/50 hover:bg-shark-800 transition-all cursor-pointer"
-                :class="{ 'border-serenade-500/50 bg-serenade-500/10 shadow-[inset_0_0_15px_rgba(245,143,66,0.1)]': currentTrack.id === track.id }"
-              >
+            <!-- List View (Mini List) -->
+            <div v-if="viewMode === 'list'" class="flex flex-col gap-2">
+               <template v-if="isLoadingLibrary">
+                 <div v-for="i in 10" :key="i" class="skeleton h-16 rounded-xl"></div>
+               </template>
+               <div 
+                 v-for="track in displayedTracks" :key="track.id"
+                 @click="playTrack(track)"
+                 class="group flex items-center gap-4 p-3 rounded-xl border border-white/5 bg-shark-900/50 hover:bg-shark-800 transition-all cursor-pointer"
+                 :class="{ 'border-serenade-500/50 bg-serenade-500/10 shadow-[inset_0_0_15px_rgba(245,143,66,0.1)]': currentTrack.id === track.id }"
+               >
                 <!-- Mini Cover -->
                 <div class="w-12 h-12 rounded overflow-hidden relative shrink-0 border border-white/5">
                    <img :src="track.image" class="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
@@ -343,6 +349,14 @@
                <img :src="currentTrack.image" class="w-full h-full object-cover opacity-10 blur-[100px] scale-110" />
             </div>
             
+            <!-- Audio Visualizer -->
+            <canvas
+              ref="visualizerCanvasRef"
+              class="absolute inset-0 z-[1] pointer-events-none opacity-40"
+              :width="1024"
+              :height="512"
+            ></canvas>
+            
             <!-- Top Nav -->
             <div class="relative z-10 flex justify-between items-start pt-4 sm:pt-0">
                <div>
@@ -500,6 +514,9 @@ import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
 import { Play, Pause, Square, SkipBack, SkipForward, Shuffle, Volume2, Maximize2, Minimize2, LayoutGrid, List, Heart, Plus, ListMusic, Trash2 } from 'lucide-vue-next';
 import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/stores/player';
+import { useAudioVisualizer } from '@/composables/useAudioVisualizer';
+
+const { canvasRef: visualizerCanvasRef, init: initVisualizer } = useAudioVisualizer();
 
 defineOptions({ name: 'PlayerView' });
 
@@ -909,6 +926,9 @@ onMounted(async () => {
       if (durationMs.value > 0) { progress.value = (currentTime.value / durationMs.value) * 100; }
     });
     audioRef.value.addEventListener("ended", () => { nextTrack(); });
+    audioRef.value.addEventListener("play", () => {
+      if (audioRef.value) initVisualizer(audioRef.value);
+    });
   }
 });
 

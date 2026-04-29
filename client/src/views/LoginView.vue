@@ -299,6 +299,7 @@ const songList = reactive([
 
 
 <template>
+    <div class="relative">
     <button @click="GoToHome" class="absolute z-30 top-2 right-2 retro-button px-6 py-3 flex items-center space-x-2">
         <Store class="w-6 h-6" />
         <span>Shop</span>
@@ -467,6 +468,7 @@ const songList = reactive([
             <div v-if="showOverlay" class="absolute inset-0 bg-shark-950 z-40"></div>
         </transition>
     </section>
+    </div>
 </template>
 
 

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   deleteExclusiveFeature,
+  getAnalytics,
   getExclusiveFeature,
   listExclusiveFeatures,
   listMusicSubmissions,
@@ -20,5 +21,7 @@ router.delete("/exclusive/:id", requireAuth, requireAdmin, deleteExclusiveFeatur
 
 router.get("/music-submissions", requireAuth, requireAdmin, listMusicSubmissions);
 router.patch("/music-submissions/:id", requireAuth, requireAdmin, updateMusicSubmission);
+
+router.get("/analytics", requireAuth, requireAdmin, getAnalytics);
 
 export default router;

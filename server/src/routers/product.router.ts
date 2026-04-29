@@ -4,6 +4,7 @@ import {
   deleteProduct,
   discoverProducts,
   getProduct,
+  getMyAnalytics,
   listMyProductSales,
   listMyProducts,
   listProducts,
@@ -18,6 +19,7 @@ router.get("/", optionalAuth, listProducts);
 router.get("/discover", optionalAuth, discoverProducts);
 router.get("/me/catalog", requireAuth, listMyProducts);
 router.get("/me/sales", requireAuth, listMyProductSales);
+router.get("/me/analytics", requireAuth, getMyAnalytics);
 router.get("/:id", optionalAuth, getProduct);
 router.post("/", requireAuth, createProduct);
 router.patch("/:id/availability", requireAuth, updateProductAvailability);

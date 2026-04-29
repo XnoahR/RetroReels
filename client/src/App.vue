@@ -17,7 +17,9 @@ const shouldMountPersistentPlayer = computed(() => {
 <template>
   <main class="-z-20 bg-shark-950">
     <RouterView v-slot="{ Component }">
-      <component :is="Component" v-if="route.name !== 'Player'" />
+      <Transition name="page" mode="out-in">
+        <component :is="Component" v-if="route.name !== 'Player'" :key="route.path" />
+      </Transition>
     </RouterView>
     <PlayerView v-if="shouldMountPersistentPlayer" />
     <AppLoadingOverlay :visible="appLoading" :message="appLoadingMessage" />
