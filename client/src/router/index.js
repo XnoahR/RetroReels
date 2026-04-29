@@ -116,16 +116,15 @@ const router = createRouter({
   ],
 });
 
+import { isLoggedIn, isAdmin } from '@/stores/auth';
+
 router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !localStorage.getItem('token')) {
-    return { name: 'Landing Page' };
+  if (to.meta.requiresAuth && !isLoggedIn.value) {
+    return { name: 'Login' };
   }
 
-  if (to.meta.requiresAdmin) {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.role !== 'ADMIN') {
-      return { name: 'Account' };
-    }
+  if (to.meta.requiresAdmin && !isAdmin.value) {
+    return { name: 'Account' };
   }
 });
 

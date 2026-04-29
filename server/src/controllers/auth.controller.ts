@@ -129,12 +129,12 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
   const bio = typeof req.body.bio === 'string' ? req.body.bio.trim() : undefined;
   const avatarUrl = typeof req.body.avatarUrl === 'string' ? req.body.avatarUrl.trim() : undefined;
 
-  const data: any = {};
+  const data: { name?: string | null; bio?: string | null; avatarUrl?: string | null } = {};
   if (name !== undefined) data.name = name || null;
   if (bio !== undefined) data.bio = bio || null;
   if (avatarUrl !== undefined) data.avatarUrl = avatarUrl || null;
 
-  const user = await (prisma.user.update as any)({
+  const user = await prisma.user.update({
     where: { id: userId },
     data,
   });

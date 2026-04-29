@@ -6,6 +6,7 @@ import DiscTape from '@/components/catalog/media/DiscTape.vue';
 import { Store } from 'lucide-vue-next';
 import { useRouter } from 'vue-router';
 import customFetch from '@/api';
+import { setAuth } from '@/stores/auth';
 
 const router = useRouter()
 
@@ -196,8 +197,7 @@ const handleLogin = async () => {
             password: loginPassword.value,
         });
         
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        setAuth(data.token, data.user);
         GoToHome();
     } catch (err) {
         errorMessage.value = err.response?.data?.message || err.message;
@@ -231,8 +231,7 @@ const handleRegister = async () => {
             password: registerPassword.value,
         });
         
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        setAuth(data.token, data.user);
         GoToHome();
     } catch (err) {
         errorMessage.value = err.response?.data?.message || err.message;

@@ -292,3 +292,193 @@ export const deleteProduct = async (req: AuthenticatedRequest, res: Response) =>
   await prisma.product.delete({ where: { id } });
   return res.json({ message: "Product deleted" });
 };
+
+// ── Discovery algorithms for home sections ────────────────────────────
+
+const publicProductWhere = { isPublished: true, availability: "AVAILABLE" as const };
+
+const getTrendingProducts = async (take = 8) => {
+  const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+  const [recentOrders, recentFavorites] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["productId"],
+      where: { createdAt: { gte: since } },
+      _count: { _all: true },
+    }),
+    prisma.favorite.groupBy({
+      by: ["productId"],
+      where: { createdAt: { gte: since } },
+      _count: { _all: true },
+    }),
+  ]);
+
+  const scoreMap = new Map<string, number>();
+  recentOrders.forEach((item) => {
+    scoreMap.set(item.productId, (scoreMap.get(item.productId) || 0) + item._count._all * 4);
+  });
+  recentFavorites.forEach((item) => {
+    scoreMap.set(item.productId, (scoreMap.get(item.productId) || 0) + item._count._all * 2);
+  });
+
+  const ids = Array.from(scoreMap.keys());
+  if (ids.length === 0) {
+    return prisma.product.findMany({
+      where: publicProductWhere,
+      include: productInclude,
+      orderBy: { createdAt: "desc" },
+      take,
+    });
+  }
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids }, ...publicProductWhere },
+    include: productInclude,
+  });
+
+  const scored = products.map((p) => ({ product: p, score: scoreMap.get(p.id) || 0 }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.slice(0, take).map((s) => s.product);
+};
+
+const getPopularProducts = async (take = 8) => {
+  const [orderCounts, favoriteCounts] = await Promise.all([
+    prisma.order.groupBy({
+      by: ["productId"],
+      _count: { _all: true },
+    }),
+    prisma.favorite.groupBy({
+      by: ["productId"],
+      _count: { _all: true },
+    }),
+  ]);
+
+  const scoreMap = new Map<string, number>();
+  orderCounts.forEach((item) => {
+    scoreMap.set(item.productId, (scoreMap.get(item.productId) || 0) + item._count._all * 4);
+  });
+  favoriteCounts.forEach((item) => {
+    scoreMap.set(item.productId, (scoreMap.get(item.productId) || 0) + item._count._all * 2);
+  });
+
+  const ids = Array.from(scoreMap.keys());
+
+  const highRated = await prisma.product.findMany({
+    where: {
+      ...publicProductWhere,
+      rating: { gte: 4 },
+      ...(ids.length ? { id: { notIn: ids } } : {}),
+    },
+    include: productInclude,
+    orderBy: { rating: "desc" },
+    take: take * 2,
+  });
+
+  if (ids.length === 0) return highRated.slice(0, take);
+
+  const products = await prisma.product.findMany({
+    where: { id: { in: ids }, ...publicProductWhere },
+    include: productInclude,
+  });
+
+  const scored = products.map((p) => ({
+    product: p,
+    score: (scoreMap.get(p.id) || 0) + p.rating * 5,
+  }));
+  scored.sort((a, b) => b.score - a.score);
+
+  const result = scored.slice(0, take).map((s) => s.product);
+  const resultIds = new Set(result.map((p) => p.id));
+  const fillers = highRated.filter((p) => !resultIds.has(p.id)).slice(0, Math.max(0, take - result.length));
+
+  return [...result, ...fillers];
+};
+
+const getRecommendedProducts = async (userId: string | undefined, take = 8) => {
+  const fallback = async () => {
+    const mix = await prisma.product.findMany({
+      where: publicProductWhere,
+      include: productInclude,
+      orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
+      take: take * 3,
+    });
+    const arr = [...mix];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = arr[i]!;
+      arr[i] = arr[j]!;
+      arr[j] = temp;
+    }
+    return arr.slice(0, take);
+  };
+
+  if (!userId) return fallback();
+
+  const [orders, favorites] = await Promise.all([
+    prisma.order.findMany({
+      where: { userId },
+      select: { product: { select: { genre: true, subGenre: true } } },
+    }),
+    prisma.favorite.findMany({
+      where: { userId },
+      select: { product: { select: { genre: true, subGenre: true } } },
+    }),
+  ]);
+
+  const genres = new Set<string>();
+  [...orders, ...favorites].forEach((item) => {
+    if (item.product?.genre) genres.add(item.product.genre);
+    if (item.product?.subGenre) genres.add(item.product.subGenre);
+  });
+
+  if (genres.size === 0) return fallback();
+
+  const ownedProductIds = await prisma.order.findMany({
+    where: { userId },
+    select: { productId: true },
+  });
+  const ownedIds = ownedProductIds.map((o) => o.productId);
+
+  const candidates = await prisma.product.findMany({
+    where: {
+      ...publicProductWhere,
+      genre: { in: Array.from(genres) },
+      ...(ownedIds.length ? { id: { notIn: ownedIds } } : {}),
+    },
+    include: productInclude,
+    orderBy: [{ rating: "desc" }, { createdAt: "desc" }],
+    take: take * 2,
+  });
+
+  if (candidates.length < Math.ceil(take / 2)) {
+    const excludeIds = [...candidates.map((c) => c.id), ...ownedIds];
+    const more = await prisma.product.findMany({
+      where: {
+        ...publicProductWhere,
+        ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
+      },
+      include: productInclude,
+      orderBy: { rating: "desc" },
+      take,
+    });
+    return [...candidates, ...more].slice(0, take);
+  }
+
+  return candidates.slice(0, take);
+};
+
+export const discoverProducts = async (req: AuthenticatedRequest, res: Response) => {
+  const [trending, popular, recommended] = await Promise.all([
+    getTrendingProducts(8),
+    getPopularProducts(8),
+    getRecommendedProducts(req.user?.id, 8),
+  ]);
+
+  return res.json({
+    data: {
+      trending,
+      popular,
+      recommended,
+    },
+  });
+};

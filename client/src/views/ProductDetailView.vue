@@ -123,16 +123,16 @@
                        <span class="text-serenade-400 font-bold">Mint / Factory Sealed</span>
                     </div>
                     <div class="grid grid-cols-[120px_1fr] items-center text-sm lg:text-base">
+                       <span class="text-gray-500 font-bold uppercase tracking-widest">Publisher</span>
+                       <span class="text-white">{{ publisherName }}</span>
+                    </div>
+                    <div class="grid grid-cols-[120px_1fr] items-center text-sm lg:text-base">
                        <span class="text-gray-500 font-bold uppercase tracking-widest">Stock</span>
-                       <span class="text-white">In Stock (Ships from Retro Warehouse)</span>
+                       <span class="text-white">{{ stockLabel }}</span>
                     </div>
                     <div class="grid grid-cols-[120px_1fr] items-start text-sm lg:text-base">
                        <span class="text-gray-500 font-bold uppercase tracking-widest mt-1">Details</span>
-                       <p class="text-gray-300 leading-relaxed text-sm">
-                          An absolute classic. The original analog master tapes were used to produce this high-fidelity physical copy. 
-                          Experience the warmth and depth that only vintage hardware formats can deliver. 
-                          Includes full original packaging, authenticated catalog metadata, and pristine liner notes.
-                       </p>
+                       <p class="text-gray-300 leading-relaxed text-sm">{{ product.description || 'No product description yet.' }}</p>
                     </div>
                  </div>
 
@@ -148,8 +148,14 @@
                     >
                        <ShoppingCart class="w-6 h-6" /> {{ isOwned ? 'In Library' : 'Add to Cart' }}
                     </button>
+                    <button v-if="isOwned" @click="playOwnedTrack" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl bg-serenade-500 text-black font-black uppercase tracking-widest text-sm hover:bg-serenade-400 transition-colors shadow-[0_0_30px_rgba(245,143,66,0.3)] hover:shadow-[0_0_40px_rgba(245,143,66,0.5)]">
+                       Play Now
+                    </button>
                     <button v-if="!isOwned" @click="openBuyModal" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl bg-serenade-500 text-black font-black uppercase tracking-widest text-sm hover:bg-serenade-400 transition-colors shadow-[0_0_30px_rgba(245,143,66,0.3)] hover:shadow-[0_0_40px_rgba(245,143,66,0.5)]">
                        Buy Now
+                    </button>
+                    <button v-else-if="isOwnedByCurrentUser" @click="router.push({ name: 'MusicStudio' })" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 font-black uppercase tracking-widest text-sm">
+                       Manage in Studio
                     </button>
                     <button v-else @click="router.push({ name: 'Player' })" class="w-full sm:flex-1 flex items-center justify-center h-14 rounded-xl border border-emerald-400/40 bg-emerald-500/10 text-emerald-200 font-black uppercase tracking-widest text-sm">
                        Owned
@@ -230,6 +236,7 @@ const errorMessage = ref('');
 const products = ref([]);
 const product = ref(null);
 const ownedProductIds = ref(new Set());
+const currentUserId = ref('');
 const showBuyModal = ref(false);
 
 const normalizeProduct = (item) => ({
@@ -243,6 +250,13 @@ const normalizeProduct = (item) => ({
 const recommendations = computed(() => {
   if (!product.value) return [];
   return products.value.filter(p => p.id !== product.value.id).sort(() => 0.5 - Math.random()).slice(0, 4);
+});
+const publisherName = computed(() => product.value?.user?.name || product.value?.user?.email || product.value?.artist || 'Retro Reels');
+const stockLabel = computed(() => {
+  const availability = product.value?.availability || 'AVAILABLE';
+  if (availability === 'SOLD_OUT') return 'Sold Out';
+  if (availability === 'WITHDRAWN') return 'Withdrawn';
+  return 'Available in catalog';
 });
 
 const goToProduct = (id) => {
@@ -265,12 +279,14 @@ const loadProduct = async () => {
       customFetch.get(`products/${route.params.id}`),
       customFetch.get('products', { params: { skip: 0, take: 8 } }),
     ];
-    if (localStorage.getItem('token')) requests.push(customFetch.get('orders'));
+    if (localStorage.getItem('token')) requests.push(customFetch.get('orders/library'));
 
     const [productRes, productsRes, ordersRes] = await Promise.all(requests);
+    const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+    currentUserId.value = cachedUser.id || '';
     product.value = normalizeProduct(productRes.data.data);
     products.value = (productsRes.data.data || []).map(normalizeProduct);
-    ownedProductIds.value = new Set((ordersRes?.data?.data || []).map((order) => order.productId));
+    ownedProductIds.value = new Set((ordersRes?.data?.data || []).map((item) => item.product?.id).filter(Boolean));
     triggerAnimation();
   } catch (error) {
     product.value = null;
@@ -280,10 +296,12 @@ const loadProduct = async () => {
   }
 };
 
-const isOwned = computed(() => product.value ? ownedProductIds.value.has(product.value.id) : false);
+const isOwnedByCurrentUser = computed(() => Boolean(product.value && currentUserId.value && product.value.userId === currentUserId.value));
+const isOwned = computed(() => product.value ? ownedProductIds.value.has(product.value.id) || isOwnedByCurrentUser.value : false);
 
 const addToCart = async () => {
   if (!product.value || !requireLogin()) return;
+  if (isOwned.value) return;
 
   try {
     await customFetch.post(`cart/${product.value.id}`);
@@ -295,7 +313,22 @@ const addToCart = async () => {
 
 const openBuyModal = () => {
   if (!product.value || !requireLogin()) return;
+  if (isOwned.value) return;
   showBuyModal.value = true;
+};
+
+const playOwnedTrack = () => {
+  if (!product.value) return;
+  const track = {
+    id: product.value.id,
+    title: product.value.title,
+    artist: product.value.artist,
+    format: product.value.format || 'VHS',
+    duration: product.value.duration || '0:00',
+    image: product.value.image || '/Yoru.jpeg',
+    audio: product.value.track?.audioUrl || product.value.previewUrl || '',
+  };
+  window.dispatchEvent(new CustomEvent('retro-reels:play-track', { detail: { track, queue: [track] } }));
 };
 
 const buyNow = async () => {

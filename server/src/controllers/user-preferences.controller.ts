@@ -19,18 +19,20 @@ export const updateSettings = async (req: AuthenticatedRequest, res: Response) =
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ message: "Authentication required" });
 
-  const { quality, hardwareNoise, crossfade, theme, volume } = req.body;
-  const data: any = {
-    quality,
-    hardwareNoise,
-    crossfade,
-    theme,
-    volume: volume === undefined ? undefined : Number(volume),
-  };
+  const { volume } = req.body;
+  const data: Record<string, unknown> = {};
 
-  Object.keys(data).forEach((key) => {
-    if (data[key] === undefined) delete data[key];
-  });
+  if (volume !== undefined) {
+    const num = Number(volume);
+    if (!Number.isFinite(num) || num < 0 || num > 1) {
+      return res.status(400).json({ message: "volume must be between 0 and 1" });
+    }
+    data.volume = Math.round(num * 100) / 100;
+  }
+
+  if (Object.keys(data).length === 0) {
+    return res.status(400).json({ message: "No valid settings provided" });
+  }
 
   const settings = await prisma.userSettings.upsert({
     where: { userId },

@@ -1,5 +1,5 @@
 <template>
-  <HomeLayout>
+  <HomeLayout v-if="isPlayerRoute">
     <section class="min-h-screen bg-shark-950 pt-24 pb-32 px-6">
       <div class="max-w-7xl mx-auto">
         
@@ -251,9 +251,22 @@
 
       </div>
 
-      <!-- The Audio Player (Exact style as HomeView) -->
-      <Teleport to="body">
+    </section>
+  </HomeLayout>
+
+  <Teleport to="body">
+    <button v-if="showMiniPlayerToggle" type="button" class="mini-show" aria-label="Show audio player" @click="setMiniPlayerHidden(false)">
+      <Maximize2 class="h-4 w-4" />
+      <span>{{ isPlaying ? 'Now Playing' : 'Player' }}</span>
+    </button>
+  </Teleport>
+
+  <!-- The Audio Player (Exact style as HomeView) -->
+  <Teleport to="body">
         <aside v-if="showMiniPlayer" class="mini-player" aria-label="Audio player">
+          <button type="button" class="mini-hide" aria-label="Hide audio player" @click="setMiniPlayerHidden(true)">
+            <Minimize2 class="h-3.5 w-3.5" />
+          </button>
           <div class="mini-main">
             <div class="mini-screen cursor-pointer" @click="toggleFullscreen">
               <div class="mini-track">
@@ -319,10 +332,10 @@
 
           <img class="mini-cover cursor-pointer hover:opacity-80 transition-opacity" :src="currentTrack.image" :alt="`${currentTrack.title} cover`" @click="toggleFullscreen" />
         </aside>
-      </Teleport>
+  </Teleport>
 
       <!-- FULLSCREEN THEME OVERLAY -->
-      <Teleport to="body">
+  <Teleport to="body">
         <transition name="fade">
           <div v-if="isFullscreen" class="fixed inset-0 z-[2147483005] bg-[#0a0a0c] flex flex-col justify-between p-4 sm:p-8 lg:p-12 overflow-y-auto overflow-x-hidden">
             <!-- Background Ambient -->
@@ -474,13 +487,10 @@
             </div>
           </div>
         </transition>
-      </Teleport>
+  </Teleport>
 
-    </section>
-
-    <!-- Hidden Audio -->
-    <audio ref="audioRef" :src="currentTrack.audio"></audio>
-  </HomeLayout>
+  <!-- Hidden Audio -->
+  <audio ref="audioRef" :src="currentTrack.audio"></audio>
 </template>
 
 <script setup>
@@ -489,10 +499,13 @@ import { useRoute } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
 import { Play, Pause, Square, SkipBack, SkipForward, Shuffle, Volume2, Maximize2, Minimize2, LayoutGrid, List, Heart, Plus, ListMusic, Trash2 } from 'lucide-vue-next';
+import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/stores/player';
 
 defineOptions({ name: 'PlayerView' });
 
 const route = useRoute();
+const hiddenRoutes = new Set(['Login', 'Home', 'Landing Page']);
+const savedMiniPlayerHidden = localStorage.getItem('retroReelsMiniPlayerHidden') === 'true';
 
 const fallbackTrack = {
   id: '',
@@ -598,22 +611,27 @@ const isVolumeDragging = ref(false);
 const isPlaying = ref(false);
 const isRandomized = ref(false);
 const isFullscreen = ref(false);
+const isMiniPlayerHidden = ref(savedMiniPlayerHidden);
 const currentIndex = ref(0);
 const progress = ref(0);
 const currentTime = ref(0);
 const durationMs = ref(0);
-const savedVolume = Number(localStorage.getItem('retroReelsPlayerVolume'));
-const volume = ref(Number.isFinite(savedVolume) ? Math.min(1, Math.max(0, savedVolume)) : 0.8);
 
 const activeQueue = computed(() => playbackQueue.value);
 const currentTrack = computed(() => activeQueue.value[currentIndex.value] || fallbackTrack);
+const isPlayerRoute = computed(() => route.name === 'Player');
 const showMiniPlayer = computed(() => {
-  const visibleRoutes = new Set(['Social', 'Player', 'Account', 'Profile', 'Settings']);
-  return tracks.value.length > 0 && visibleRoutes.has(route.name);
+  return Boolean(currentTrack.value.id) && !isMiniPlayerHidden.value && !hiddenRoutes.has(route.name);
 });
+const showMiniPlayerToggle = computed(() => Boolean(currentTrack.value.id) && isMiniPlayerHidden.value && !hiddenRoutes.has(route.name));
 
-const volumePercent = computed(() => Math.round(volume.value * 100));
-const volumeKnobAngle = computed(() => -135 + volume.value * 270);
+const volumePercent = computed(() => Math.round(playerVolume.value * 100));
+const volumeKnobAngle = computed(() => -135 + playerVolume.value * 270);
+
+const setMiniPlayerHidden = (hidden) => {
+  isMiniPlayerHidden.value = hidden;
+  localStorage.setItem('retroReelsMiniPlayerHidden', String(hidden));
+};
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value;
@@ -647,8 +665,22 @@ const playTrack = (track, queue = displayedTracks.value) => {
   if (index !== -1) {
     playbackQueue.value = scopedQueue;
     currentIndex.value = index;
-    setTimeout(() => { if (audioRef.value) { audioRef.value.play(); isPlaying.value = true; } }, 50);
+    setMiniPlayerHidden(false);
+    setTimeout(() => {
+      if (audioRef.value) {
+        applyVolumeToAudio(audioRef.value);
+        audioRef.value.play();
+        isPlaying.value = true;
+      }
+    }, 50);
   }
+};
+
+const handleExternalPlayRequest = (event) => {
+  const track = event.detail?.track;
+  const queue = Array.isArray(event.detail?.queue) ? event.detail.queue.filter(Boolean) : [];
+  if (!track) return;
+  playTrack(track, queue.length ? queue : [track]);
 };
 
 const nextTrack = () => {
@@ -711,7 +743,7 @@ const updateVolumeFromPointer = (knobElement, clientX, clientY) => {
   if (rawAngle < -180) rawAngle += 360;
 
   const angle = Math.min(135, Math.max(-135, rawAngle));
-  volume.value = (angle + 135) / 270;
+  playerVolume.value = (angle + 135) / 270;
 };
 
 const startVolumeDrag = (event) => {
@@ -732,9 +764,8 @@ const stopVolumeDrag = () => {
   activeKnob = null;
 };
 
-watch(volume, (newVol) => {
+watch(playerVolume, (newVol) => {
   if (audioRef.value) audioRef.value.volume = newVol;
-  localStorage.setItem('retroReelsPlayerVolume', String(newVol));
 });
 
 const mapProductToTrack = (product) => {
@@ -865,11 +896,13 @@ const selectPlaylist = (playlist) => {
   selectedPlaylistId.value = selectedPlaylistId.value === playlist.id ? '' : playlist.id;
 };
 
-onMounted(() => {
+onMounted(async () => {
+  await loadPlayerVolume();
   loadLibrary();
   window.addEventListener('retro-reels:library-updated', handleLibraryUpdated);
+  window.addEventListener('retro-reels:play-track', handleExternalPlayRequest);
   if (audioRef.value) {
-    audioRef.value.volume = volume.value;
+    applyVolumeToAudio(audioRef.value);
     audioRef.value.addEventListener("loadedmetadata", () => { durationMs.value = audioRef.value.duration; });
     audioRef.value.addEventListener("timeupdate", () => {
       currentTime.value = audioRef.value.currentTime;
@@ -881,6 +914,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('retro-reels:library-updated', handleLibraryUpdated);
+  window.removeEventListener('retro-reels:play-track', handleExternalPlayRequest);
+  window.clearTimeout(noticeTimer);
 });
 </script>
 
@@ -918,6 +953,41 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   isolation: isolate;
   font-family: "Courier New", monospace;
+}
+
+.mini-hide,
+.mini-show {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: linear-gradient(145deg, #404040, #2a2a2a);
+  color: #ccc;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  font-family: "Courier New", monospace;
+}
+
+.mini-hide {
+  position: absolute;
+  top: 0.7rem;
+  right: 8.2rem;
+  z-index: 2;
+  height: 1.8rem;
+  width: 1.8rem;
+}
+
+.mini-show {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 2147483001;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .mini-cover {
@@ -1147,6 +1217,12 @@ onBeforeUnmount(() => {
       "controls controls";
     padding: 0.65rem;
     gap: 0.55rem;
+  }
+  .mini-hide {
+    top: 0.45rem;
+    right: 4.25rem;
+    height: 1.6rem;
+    width: 1.6rem;
   }
   .mini-main {
     display: contents;

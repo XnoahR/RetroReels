@@ -94,6 +94,7 @@ import Catalog from '@/layouts/Catalog.vue';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
 import { Maximize2, Minimize2, Pause, Play, Square, Volume2 } from 'lucide-vue-next';
+import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/stores/player';
 
 const catalogRef = ref(null);
 const volumeKnobRef = ref(null);
@@ -123,7 +124,6 @@ const player = reactive({
   currentTime: 0,
   duration: 0,
   progress: 0,
-  volume: 0.8,
 });
 
 const displayedProduct = computed(() => player.product || fallbackProduct);
@@ -133,8 +133,8 @@ const exclusiveDurationLabel = computed(() => {
   if (isExclusiveActive.value && player.duration) return formatTime(player.duration);
   return exclusiveProduct.value.duration;
 });
-const volumePercent = computed(() => Math.round(player.volume * 100));
-const volumeKnobAngle = computed(() => -135 + player.volume * 270);
+const volumePercent = computed(() => Math.round(playerVolume.value * 100));
+const volumeKnobAngle = computed(() => -135 + playerVolume.value * 270);
 
 const updatePlayerState = (state) => {
   player.product = state.product;
@@ -142,7 +142,6 @@ const updatePlayerState = (state) => {
   player.currentTime = state.currentTime;
   player.duration = state.duration;
   player.progress = state.progress;
-  player.volume = state.volume;
 };
 
 const toggleCurrent = () => {
@@ -163,7 +162,7 @@ const seekCurrent = (event) => {
 };
 
 const setVolumeValue = (value) => {
-  catalogRef.value?.setVolume(value);
+  playerVolume.value = Math.min(1, Math.max(0, Number(value)));
 };
 
 const updateVolumeFromPointer = (event) => {
@@ -199,7 +198,7 @@ const stopVolumeDrag = () => {
 
 const handleVolumeKeydown = (event) => {
   const step = event.shiftKey ? 0.1 : 0.05;
-  let nextVolume = player.volume;
+  let nextVolume = playerVolume.value;
 
   if (event.key === 'ArrowUp' || event.key === 'ArrowRight') nextVolume += step;
   else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') nextVolume -= step;
@@ -244,7 +243,10 @@ const loadExclusive = async () => {
   }
 };
 
-onMounted(loadExclusive);
+onMounted(async () => {
+  await loadPlayerVolume();
+  loadExclusive();
+});
 </script>
 
 <style scoped>

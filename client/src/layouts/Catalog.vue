@@ -351,6 +351,7 @@ import CatalogHighlights from '@/components/catalog/CatalogHighlights.vue';
 import CassetteTape from '@/components/catalog/media/CassetteTape.vue';
 import VhsTapeBox from '@/components/catalog/media/VhsTapeBox.vue';
 import VinylAlbum from '@/components/catalog/media/VinylAlbum.vue';
+import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/stores/player';
 
 const emit = defineEmits(['player-state']);
 const router = useRouter();
@@ -362,6 +363,11 @@ const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);
 const sortBy = ref('featured');
 
 const products = ref([]);
+const homeSections = ref({
+  recommended: [],
+  popular: [],
+  trending: [],
+});
 const loadMoreTarget = ref(null);
 const isLoadingProducts = ref(false);
 const isLoadingMoreProducts = ref(false);
@@ -376,7 +382,6 @@ const pendingPurchase = ref(null);
 const currentProductId = ref('');
 const isCurrentAudioPlaying = ref(false);
 const currentTime = ref(0);
-const volume = ref(0.8);
 const audioById = new Map();
 const progressById = reactive({});
 const durationById = reactive({});
@@ -384,7 +389,7 @@ let loadMoreObserver = null;
 
 const setAudioRef = (el, id) => {
   if (el) {
-    el.volume = volume.value;
+    applyVolumeToAudio(el);
     audioById.set(id, el);
   } else {
     audioById.delete(id);
@@ -428,6 +433,28 @@ const loadProducts = async () => {
     isLoadingProducts.value = false;
     await nextTick();
     setupLoadMoreObserver();
+  }
+};
+
+const loadHomeSections = async () => {
+  try {
+    const { data } = await customFetch.get('products/discover');
+    const sections = data.data || {};
+    const normalize = (p) => ({
+      ...p,
+      baseColor: p.vhsDesign?.baseColor || 'bg-zinc-950',
+      borderColor: p.vhsDesign?.borderColor || 'border-zinc-500',
+      discColor: p.vhsDesign?.discColor || 'bg-zinc-300',
+      sideColor: p.vhsDesign?.sideColor || 'bg-zinc-100',
+      audio: p.track?.audioUrl || p.previewUrl || '',
+    });
+    homeSections.value = {
+      recommended: (sections.recommended || []).map(normalize),
+      popular: (sections.popular || []).map(normalize),
+      trending: (sections.trending || []).map(normalize),
+    };
+  } catch {
+    // Silent fail: computed fallback will use the regular catalog
   }
 };
 
@@ -559,7 +586,7 @@ const togglePreview = async (product) => {
 
   const audio = audioById.get(product.id);
   if (!audio) return;
-  audio.volume = volume.value;
+  applyVolumeToAudio(audio);
 
   if (activeProduct.value === product.id) {
     audio.pause();
@@ -648,12 +675,9 @@ const seekCurrent = (progress) => {
 };
 
 const setVolume = (value) => {
-  const nextVolume = Math.min(1, Math.max(0, Number(value)));
-  if (!Number.isFinite(nextVolume)) return;
-
-  volume.value = nextVolume;
+  playerVolume.value = Math.min(1, Math.max(0, Number(value)));
   audioById.forEach((audio) => {
-    audio.volume = nextVolume;
+    applyVolumeToAudio(audio);
   });
   emitPlayerState();
 };
@@ -669,21 +693,29 @@ const formats = computed(() => [...new Set(products.value.map((product) => produ
 const highlightGroups = computed(() => [
   {
     title: 'Recommended Music',
-    caption: 'Easy starts for the archive mood',
+    caption: homeSections.value.recommended.length
+      ? 'Curated just for your vibe'
+      : 'Easy starts for the archive mood',
     icon: 'headphones',
-    items: products.value.slice(0, 4),
+    items: homeSections.value.recommended.length
+      ? homeSections.value.recommended
+      : products.value.slice(0, 4),
   },
   {
     title: 'Popular Picks',
-    caption: 'Highest rated tapes in the shelf',
+    caption: 'Most loved tapes on the shelf',
     icon: 'flame',
-    items: products.value.filter((product) => product.rating >= 5).slice(0, 5),
+    items: homeSections.value.popular.length
+      ? homeSections.value.popular
+      : products.value.filter((product) => product.rating >= 5).slice(0, 5),
   },
   {
     title: 'Trending Musics',
-    caption: 'Fresh additions from the public folder',
+    caption: 'What the crowd is spinning right now',
     icon: 'sparkles',
-    items: products.value.slice(-4).reverse(),
+    items: homeSections.value.trending.length
+      ? homeSections.value.trending
+      : products.value.slice(0, 4),
   },
 ]);
 
@@ -717,13 +749,15 @@ const emitPlayerState = () => {
     currentTime: currentTime.value,
     duration: durationById[product.id] || 0,
     progress: progressById[product.id] || 0,
-    volume: volume.value,
+    volume: playerVolume.value,
     activeProductId: activeProduct.value,
   });
 };
 
 onMounted(async () => {
+  await loadPlayerVolume();
   await loadProducts();
+  await loadHomeSections();
   await loadOwnedProducts();
   emitPlayerState();
 });

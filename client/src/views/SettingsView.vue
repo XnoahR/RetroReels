@@ -5,7 +5,7 @@
         <header class="rounded-lg border border-white/10 bg-white/[0.035] p-5">
           <p class="text-xs font-black uppercase tracking-[0.24em] text-serenade-400">Account Menu</p>
           <h1 class="mt-2 text-3xl font-black uppercase tracking-widest">Settings</h1>
-          <p class="mt-2 text-sm leading-6 text-gray-400">Manage your public profile, playback preferences, and password.</p>
+          <p class="mt-2 text-sm leading-6 text-gray-400">Manage your public profile and password.</p>
         </header>
 
         <p v-if="alert.message" class="rounded border px-4 py-3 text-sm font-bold" :class="alert.type === 'error' ? 'border-red-400/40 bg-red-500/10 text-red-200' : 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'">
@@ -53,40 +53,12 @@
             </label>
           </div>
 
-          <button class="mt-5 h-11 rounded bg-serenade-500 px-5 text-sm font-black uppercase tracking-widest text-black hover:bg-serenade-400" @click="saveProfile">
-            Save Profile
-          </button>
-        </section>
-
-        <section class="rounded-lg border border-white/10 bg-white/[0.035] p-5">
-          <div class="mb-5">
-            <p class="text-xs font-black uppercase tracking-[0.24em] text-serenade-400">Playback</p>
-            <h2 class="mt-1 text-xl font-black uppercase tracking-widest">Player Settings</h2>
-          </div>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <label class="space-y-2">
-              <span class="label">Streaming Quality</span>
-              <select v-model="settingsForm.quality" class="field">
-                <option>Standard</option>
-                <option>High</option>
-                <option>Lossless</option>
-              </select>
-            </label>
-            <label class="space-y-2">
-              <span class="label">Volume</span>
-              <input v-model.number="settingsForm.volume" class="field" max="1" min="0" step="0.05" type="number" />
-            </label>
-            <label class="toggle-row">
-              <span>Hardware Crackle</span>
-              <input v-model="settingsForm.hardwareNoise" type="checkbox" />
-            </label>
-            <label class="toggle-row">
-              <span>Crossfade</span>
-              <input v-model="settingsForm.crossfade" type="checkbox" />
-            </label>
-          </div>
-          <button class="mt-5 h-11 rounded bg-serenade-500 px-5 text-sm font-black uppercase tracking-widest text-black hover:bg-serenade-400" @click="saveSettings">
-            Save Playback
+          <button
+            class="mt-5 h-11 rounded bg-serenade-500 px-5 text-sm font-black uppercase tracking-widest text-black hover:bg-serenade-400 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="isSavingProfile"
+            @click="saveProfile"
+          >
+            {{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
           </button>
         </section>
 
@@ -104,9 +76,17 @@
               <span class="label">New Password</span>
               <input v-model="passwordForm.newPassword" class="field" type="password" />
             </label>
+            <label class="space-y-2 sm:col-span-2">
+              <span class="label">Confirm New Password</span>
+              <input v-model="passwordForm.confirmPassword" class="field" type="password" @keyup.enter="changePassword" />
+            </label>
           </div>
-          <button class="mt-5 h-11 rounded border border-serenade-500/40 px-5 text-sm font-black uppercase tracking-widest text-serenade-300 hover:bg-serenade-500/10" @click="changePassword">
-            Update Password
+          <button
+            class="mt-5 h-11 rounded border border-serenade-500/40 px-5 text-sm font-black uppercase tracking-widest text-serenade-300 hover:bg-serenade-500/10 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="isChangingPassword"
+            @click="changePassword"
+          >
+            {{ isChangingPassword ? 'Updating...' : 'Update Password' }}
           </button>
         </section>
       </div>
@@ -116,30 +96,30 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import HomeLayout from '@/layouts/HomeLayout.vue';
 import customFetch from '@/api';
+import { currentUser as authUser, isLoggedIn, updateUser } from '@/stores/auth';
 
-const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+const router = useRouter();
+
 const currentUser = reactive({
-  email: storedUser.email || '',
+  email: authUser.value?.email || '',
 });
 const alert = reactive({ message: '', type: 'success' });
 const isUploadingAvatar = ref(false);
+const isSavingProfile = ref(false);
+const isChangingPassword = ref(false);
+
 const profileForm = reactive({
-  name: storedUser.name || '',
-  bio: storedUser.bio || '',
-  avatarUrl: storedUser.avatarUrl || '',
-});
-const settingsForm = reactive({
-  quality: 'High',
-  hardwareNoise: true,
-  crossfade: false,
-  theme: 'dark-neon',
-  volume: 0.8,
+  name: authUser.value?.name || '',
+  bio: authUser.value?.bio || '',
+  avatarUrl: authUser.value?.avatarUrl || '',
 });
 const passwordForm = reactive({
   currentPassword: '',
   newPassword: '',
+  confirmPassword: '',
 });
 
 const initials = (value) => value
@@ -196,51 +176,59 @@ const uploadAvatar = async (event) => {
 };
 
 const loadSettings = async () => {
+  if (!isLoggedIn.value) {
+    router.push({ name: 'Login' });
+    return;
+  }
+
   try {
-    const [meRes, settingsRes] = await Promise.all([
-      customFetch.get('auth/me'),
-      customFetch.get('me/settings'),
-    ]);
+    const meRes = await customFetch.get('auth/me');
     Object.assign(profileForm, {
       name: meRes.data.user.name || '',
       bio: meRes.data.user.bio || '',
       avatarUrl: meRes.data.user.avatarUrl || '',
     });
     currentUser.email = meRes.data.user.email;
-    localStorage.setItem('user', JSON.stringify(meRes.data.user));
-    Object.assign(settingsForm, settingsRes.data.data || {});
+    updateUser(meRes.data.user);
   } catch (error) {
-    setAlert(error.response?.data?.message || 'Failed to load settings', 'error');
+    setAlert(error.response?.data?.message || 'Failed to load profile', 'error');
   }
 };
 
 const saveProfile = async () => {
+  if (isSavingProfile.value) return;
+  isSavingProfile.value = true;
   try {
     const response = await customFetch.patch('auth/profile', profileForm);
-    localStorage.setItem('user', JSON.stringify(response.data.user));
+    updateUser(response.data.user);
     setAlert('Profile saved.');
   } catch (error) {
     setAlert(error.response?.data?.message || 'Failed to save profile', 'error');
-  }
-};
-
-const saveSettings = async () => {
-  try {
-    await customFetch.patch('me/settings', settingsForm);
-    setAlert('Playback settings saved.');
-  } catch (error) {
-    setAlert(error.response?.data?.message || 'Failed to save playback settings', 'error');
+  } finally {
+    isSavingProfile.value = false;
   }
 };
 
 const changePassword = async () => {
+  if (isChangingPassword.value) return;
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    setAlert('New passwords do not match.', 'error');
+    return;
+  }
+  isChangingPassword.value = true;
   try {
-    await customFetch.patch('auth/password', passwordForm);
+    await customFetch.patch('auth/password', {
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
     passwordForm.currentPassword = '';
     passwordForm.newPassword = '';
+    passwordForm.confirmPassword = '';
     setAlert('Password updated.');
   } catch (error) {
     setAlert(error.response?.data?.message || 'Failed to update password', 'error');
+  } finally {
+    isChangingPassword.value = false;
   }
 };
 
@@ -270,22 +258,5 @@ onMounted(loadSettings);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgb(107, 114, 128);
-}
-
-.toggle-row {
-  display: flex;
-  min-height: 3.25rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.34);
-  padding: 0.75rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgb(209, 213, 219);
 }
 </style>
