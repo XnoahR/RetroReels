@@ -13,7 +13,7 @@
 
       <!-- Stage 1: Intro sliding media -->
       <transition name="slide-intro" appear>
-         <div v-if="isAnimatingIn && product" class="fixed z-[100] top-1/2 left-1/2 w-64 h-64 lg:w-96 lg:h-96 pointer-events-none drop-shadow-[0_30px_60px_rgba(0,0,0,0.8)] intro-media">
+         <div v-if="isAnimatingIn && product" class="fixed z-[100] top-1/2 left-1/2 w-64 h-64 lg:w-96 lg:h-96 max-md:w-40 max-md:h-40 pointer-events-none drop-shadow-[0_30px_60px_rgba(0,0,0,0.8)] intro-media">
             
             <!-- Vinyl Disc -->
             <div v-if="product.format === 'Vinyl'" class="w-full h-full rounded-full bg-[#050505] flex items-center justify-center shadow-inner relative border-2 border-gray-800 animate-[spin_1.5s_linear_infinite]">

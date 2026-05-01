@@ -200,25 +200,25 @@ defineEmits(['seek', 'toggle']);
   margin-left: -1.5rem;
 }
 
-.record-wrap {
-  transform: perspective(900px) rotate(5deg) skewY(4deg) scale(1.72);
-  filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.6));
-}
-
-@media (min-width: 1024px) {
-  .exclusive-inner {
-    grid-template-columns: minmax(0, 0.9fr) minmax(30rem, 0.8fr);
-    min-height: 46rem;
-    padding: 6rem 3rem;
-  }
-
-  .exclusive-art {
-    justify-content: center;
-    margin-left: -5rem;
-  }
-
   .record-wrap {
-    transform: perspective(900px) rotate(6deg) skewY(5deg) scale(2.22);
+    transform: perspective(900px) rotate(5deg) skewY(4deg) scale(0.94);
+    filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.6));
   }
-}
+
+  @media (min-width: 1024px) {
+    .exclusive-inner {
+      grid-template-columns: minmax(0, 0.9fr) minmax(30rem, 0.8fr);
+      min-height: 46rem;
+      padding: 6rem 3rem;
+    }
+
+    .exclusive-art {
+      justify-content: center;
+      margin-left: -5rem;
+    }
+
+    .record-wrap {
+      transform: perspective(900px) rotate(6deg) skewY(5deg) scale(2.22);
+    }
+  }
 </style>

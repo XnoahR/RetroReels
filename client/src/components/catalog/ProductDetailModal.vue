@@ -8,7 +8,7 @@
         
         <!-- The Sliding Vinyl Animation Element -->
         <transition name="slide-roll">
-           <div v-if="isAnimatingIn && product" class="absolute z-20 pointer-events-none w-64 h-64 lg:w-96 lg:h-96">
+           <div v-if="isAnimatingIn && product" class="absolute z-20 pointer-events-none w-64 h-64 lg:w-96 lg:h-96 max-md:w-40 max-md:h-40">
               <div class="w-full h-full rounded-full bg-[#050505] flex items-center justify-center shadow-2xl relative border-2 border-gray-800 animate-[spin_2s_linear_infinite]">
                  <!-- Vinyl Grooves -->
                  <div class="absolute inset-2 rounded-full border border-white/10"></div>

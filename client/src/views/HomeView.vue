@@ -535,4 +535,49 @@ onBeforeRouteLeave((to) => {
   }
 }
 
+@media (max-width: 640px) {
+  .mini-player {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    width: calc(100vw - 1rem);
+    grid-template-columns: minmax(0, 1fr) 5rem;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .mini-cover {
+    height: 5rem;
+    width: 5rem;
+  }
+
+  .mini-screen {
+    min-height: 2.5rem;
+    padding: 0.5rem;
+  }
+
+  .mini-track span {
+    font-size: 0.7rem;
+  }
+
+  .mini-controls {
+    gap: 0.35rem;
+  }
+
+  .mini-button {
+    height: 1.85rem;
+    width: 1.85rem;
+  }
+
+  .mini-button.primary {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  .mini-show {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.65rem;
+  }
+}
 </style>

@@ -8,14 +8,15 @@ import { appLoading, appLoadingMessage } from '@/stores/loading';
 
 const route = useRoute();
 
+const hiddenPlayerRoutes = new Set(['Login', 'Landing Page']);
+
 const shouldMountPersistentPlayer = computed(() => {
-  route.name;
-  return Boolean(localStorage.getItem('token'));
+  return Boolean(localStorage.getItem('token')) && !hiddenPlayerRoutes.has(route.name);
 });
 </script>
 
 <template>
-  <main class="-z-20 bg-shark-950">
+  <main class="min-h-screen w-full -z-20 bg-shark-950">
     <RouterView v-slot="{ Component }">
       <Transition name="page" mode="out-in">
         <component :is="Component" v-if="route.name !== 'Player'" :key="route.path" />

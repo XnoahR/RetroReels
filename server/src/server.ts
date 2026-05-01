@@ -18,9 +18,18 @@ getJwtSecret();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: 'https://retroreels.endea4.id',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 app.use("/api/vhs", VhsRouter);
 app.use("/api/auth", AuthRouter);
@@ -35,6 +44,11 @@ app.use("/api/music-submissions", MusicSubmissionRouter);
 
 app.use("/vhs", VhsRouter);
 app.use("/auth", AuthRouter);
+
+app.use((err, _req, res, _next) => {
+  console.error("Unhandled error:", err);
+  res.status(500).json({ message: "Internal server error" });
+});
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");

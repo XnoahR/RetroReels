@@ -39,6 +39,16 @@
           <ShoppingCart class="h-4 w-4" />
           Cart
         </RouterLink>
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-white/10 bg-white/5 text-gray-300 transition hover:border-white/20 hover:text-white md:hidden"
+          aria-label="Toggle menu"
+          :aria-expanded="isMobileMenuOpen"
+          @click="isMobileMenuOpen = !isMobileMenuOpen"
+        >
+          <Menu v-if="!isMobileMenuOpen" class="h-5 w-5" />
+          <X v-else class="h-5 w-5" />
+        </button>
         <div v-if="isLoggedIn" ref="accountMenuRef" class="relative">
           <button
             type="button"
@@ -78,13 +88,48 @@
         </RouterLink>
       </div>
     </div>
+
+    <Transition name="mobile-menu">
+      <div v-if="isMobileMenuOpen" class="border-b border-white/10 bg-black/95 md:hidden">
+        <div class="flex flex-col gap-1 px-4 py-3">
+          <RouterLink
+            v-for="route in visibleRoutes"
+            :key="route.to"
+            :to="route.to"
+            class="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold text-gray-300 transition hover:bg-white/10 hover:text-white"
+            @click="isMobileMenuOpen = false"
+          >
+            <component :is="route.icon" class="h-4 w-4" />
+            <span>{{ route.label }}</span>
+          </RouterLink>
+          <div class="my-1 border-t border-white/10"></div>
+          <RouterLink
+            v-if="isLoggedIn"
+            to="/top-up"
+            class="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-bold text-serenade-300 transition hover:bg-white/10"
+            @click="isMobileMenuOpen = false"
+          >
+            <Coins class="h-4 w-4" />
+            <span>${{ currentUser.credits ?? 0 }} - Top Up</span>
+          </RouterLink>
+          <RouterLink
+            v-if="!isLoggedIn"
+            to="/login"
+            class="flex items-center gap-3 rounded-md px-3 py-3 text-sm font-bold text-serenade-300 transition hover:bg-white/10"
+            @click="isMobileMenuOpen = false"
+          >
+            Login
+          </RouterLink>
+        </div>
+      </div>
+    </Transition>
   </nav>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue';
 import customFetch from '@/api';
-import { Coins, Gauge, Home, LogOut, Radio, Settings, ShoppingCart, UsersRound, UserRound } from 'lucide-vue-next';
+import { Coins, Gauge, Home, LogOut, Menu, Radio, Settings, ShoppingCart, UsersRound, UserRound, X } from 'lucide-vue-next';
 import { RouterLink, useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -99,6 +144,7 @@ const currentUser = reactive({
 });
 const accountMenuRef = ref<HTMLElement | null>(null);
 const isAccountMenuOpen = ref(false);
+const isMobileMenuOpen = ref(false);
 const isLoggedIn = computed(() => Boolean(localStorage.getItem('token')));
 const isAdmin = computed(() => currentUser.role === 'ADMIN');
 const userInitials = computed(() => {
@@ -203,5 +249,22 @@ onBeforeUnmount(() => {
 .menu-item:hover {
   background: rgba(255, 255, 255, 0.08);
   color: white;
+}
+
+.mobile-menu-enter-active,
+.mobile-menu-leave-active {
+  transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.mobile-menu-enter-from,
+.mobile-menu-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+
+.mobile-menu-enter-to,
+.mobile-menu-leave-from {
+  max-height: 24rem;
+  opacity: 1;
 }
 </style>

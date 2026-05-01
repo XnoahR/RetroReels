@@ -13,11 +13,11 @@
                 </svg>
                 <div class="inline-flex flex-col gap-2">
                     <label for="username" class="text-primary-50 font-semibold">Username</label>
-                    <InputText id="username" class="!bg-white/20 !border-0 !p-4 !text-primary-50 w-80"></InputText>
+                    <InputText id="username" class="!bg-white/20 !border-0 !p-4 !text-primary-50 w-full max-w-80"></InputText>
                 </div>
                 <div class="inline-flex flex-col gap-2">
                     <label for="password" class="text-primary-50 font-semibold">Password</label>
-                    <InputText id="password" class="!bg-white/20 !border-0 !p-4 !text-primary-50 w-80" type="password">
+                    <InputText id="password" class="!bg-white/20 !border-0 !p-4 !text-primary-50 w-full max-w-80" type="password">
                     </InputText>
                 </div>
                 <div class="flex items-center gap-4">

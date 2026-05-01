@@ -1,6 +1,6 @@
 <template>
   <HomeLayout v-if="isPlayerRoute">
-    <section class="min-h-screen bg-shark-950 pt-24 pb-32 px-6">
+    <section class="min-h-screen bg-shark-950 pt-20 sm:pt-24 pb-32 px-4 sm:px-6">
       <div class="max-w-7xl mx-auto">
         
         <!-- Header & Top Actions -->

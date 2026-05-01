@@ -358,7 +358,7 @@ import { volume as playerVolume, applyVolumeToAudio, loadPlayerVolume } from '@/
 const emit = defineEmits(['player-state']);
 const router = useRouter();
 
-const showFilters = ref(true);
+const showFilters = ref(window.innerWidth >= 1024);
 const search = ref('');
 const selectedGenre = ref('All');
 const selectedFormats = ref(['VHS', 'Cassette', 'Vinyl']);

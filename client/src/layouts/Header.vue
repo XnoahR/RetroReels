@@ -39,11 +39,6 @@ const GoToLogin = () => {
   router.push({'name' : 'Login'})
 }
 
-const isMobileScreen = ref(window.innerWidth < 640);
-window.addEventListener('resize', () => {
-    isMobileScreen.value = window.innerWidth < 640;
-});
-
 const isOpen = ref(false);
 const toggleMenu = () => { isOpen.value = !isOpen.value };
 
@@ -76,9 +71,9 @@ const toggleMenu = () => { isOpen.value = !isOpen.value };
     @leave="leave"
   >
     <div 
-      v-if="isOpen && isMobileScreen"
+      v-if="isOpen"
       id="SecondMenuBar" 
-      class="w-full absolute bg-white z-50 border-b border-black overflow-hidden"
+      class="w-full sm:hidden absolute bg-white z-50 border-b border-black overflow-hidden"
     >
       <ul class="flex max-sm:h-full max-sm:flex-col justify-evenly items-center py-6">
         <li

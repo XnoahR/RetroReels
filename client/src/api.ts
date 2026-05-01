@@ -32,7 +32,12 @@ customFetch.interceptors.response.use(
 
         if (error.response?.status === 401) {
             clearAuth();
-            window.location.href = '/login';
+            const path = window.location.pathname;
+            const protectedPaths = ['/player', '/cart', '/top-up', '/account', '/settings', '/studio', '/admin'];
+            const isProtected = protectedPaths.some(p => path === p || path.startsWith(p + '/'));
+            if (isProtected) {
+                window.location.href = '/login';
+            }
         }
 
         return Promise.reject(error);

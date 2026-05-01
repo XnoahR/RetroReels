@@ -304,7 +304,7 @@ const songList = reactive([
         <Store class="w-6 h-6" />
         <span>Shop</span>
     </button>
-    <section class="w-screen h-screen flex flex-col justify-center bg-shark-950 overflow-hidden relative">
+    <section :class="['h-screen w-screen flex flex-col justify-center bg-shark-950 relative', showRegister ? 'overflow-y-auto' : 'overflow-hidden']">
         <VynylCassete ref="casseteRef" :image="songList[currentSong].image" />
         <div class="vhs-blocker">
             <span
@@ -487,6 +487,7 @@ const songList = reactive([
     transform: translateY(-100%);
     transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 20;
+    overflow-y: auto;
     box-shadow:
         inset 0 -3px 0 rgba(255, 255, 255, 0.1),
         inset 0 3px 0 rgba(0, 0, 0, 0.3),

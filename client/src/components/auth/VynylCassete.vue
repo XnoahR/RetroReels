@@ -6,7 +6,7 @@
       spin ? 'animate-spin-slow-right' : '',
       exit ? 'exit-animation' : ''
     ]"
-    class="vinyl-body absolute w-disc h-disc rounded-full -left-72 -top-64 flex justify-center items-center transition-transform z-50"
+    class="vinyl-body hidden sm:flex absolute w-disc h-disc rounded-full -left-72 -top-64 justify-center items-center transition-transform z-50"
   >
     <div class="border border-white/10 rounded-full w-5/6 h-5/6 flex items-center justify-center vinyl-groove">
       <div class="border border-white/10 rounded-full w-5/6 h-5/6 flex items-center justify-center vinyl-groove">

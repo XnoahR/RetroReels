@@ -36,7 +36,7 @@ function goTo(path: string) {
 </script>
 
 <template>
-    <section class="w-screen h-screen flex flex-col justify-center items-center bg-shark-950">
+    <section class="min-h-screen w-full flex flex-col justify-center items-center bg-shark-950">
 
 <transition name="fade">
 
