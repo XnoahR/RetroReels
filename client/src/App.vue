@@ -1,12 +1,12 @@
 <script setup>
-import { RouterView } from 'vue-router';
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { defineAsyncComponent, computed } from 'vue';
+import { RouterView, useRoute } from 'vue-router';
 import AppLoadingOverlay from '@/components/app/AppLoadingOverlay.vue';
-import PlayerView from '@/views/PlayerView.vue';
 import { appLoading, appLoadingMessage } from '@/stores/loading';
 
 const route = useRoute();
+
+const PlayerView = defineAsyncComponent(() => import('@/views/PlayerView.vue'));
 
 const hiddenPlayerRoutes = new Set(['Login', 'Landing Page']);
 

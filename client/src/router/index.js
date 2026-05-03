@@ -3,9 +3,7 @@ import HomeView from '../views/HomeView.vue';
 import AboutView from '@/views/AboutView.vue';
 import ContactView from '@/views/ContactView.vue';
 import SocialView from '@/views/SocialView.vue';
-import LoginView from '@/views/LoginView.vue';
 import LandingPageView from '@/views/LandingPageView.vue';
-import PlayerView from '@/views/PlayerView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -59,12 +57,12 @@ const router = createRouter({
     {
       path: '/login',
       name: 'Login',
-      component: LoginView,
+      component: () => import('../views/LoginView.vue'),
     },
     {
       path: '/player',
       name: 'Player',
-      component: PlayerView,
+      component: () => import('../views/PlayerView.vue'),
       meta: { requiresAuth: true },
     },
     {

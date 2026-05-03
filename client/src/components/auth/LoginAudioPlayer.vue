@@ -252,7 +252,7 @@ const formatTime = (time: number) => {
         </div>
 
         <!-- Hidden Audio Element -->
-        <audio ref="audio" :src="src"></audio>
+        <audio ref="audio" :src="src" preload="none"></audio>
     </div>
 </template>
 

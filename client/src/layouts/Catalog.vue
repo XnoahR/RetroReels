@@ -299,18 +299,7 @@
       </main>
     </div>
 
-    <div class="hidden" aria-hidden="true">
-      <audio
-        v-for="product in products"
-        :key="`audio-${product.id}`"
-        :ref="(el) => setAudioRef(el, product.id)"
-        :src="product.audio"
-        preload="metadata"
-        @ended="handleAudioEnded(product.id)"
-        @loadedmetadata="handleAudioLoaded(product.id)"
-        @timeupdate="updateProgress(product.id)"
-      ></audio>
-    </div>
+    <audio ref="audioRef" preload="none" @ended="handleAudioEnded" @loadedmetadata="handleAudioLoaded" @timeupdate="updateProgress"></audio>
 
     <div v-if="cartMessage" class="fixed bottom-6 left-1/2 z-[2147483001] -translate-x-1/2 rounded-lg border border-white/10 bg-black/90 px-5 py-3 text-sm font-bold text-white shadow-2xl">
       {{ cartMessage }}
@@ -384,7 +373,7 @@ const pendingPurchase = ref(null);
 const currentProductId = ref('');
 const isCurrentAudioPlaying = ref(false);
 const currentTime = ref(0);
-const audioById = new Map();
+const audioRef = ref(null);
 const progressById = reactive({});
 const durationById = reactive({});
 const visibleCards = ref(new Set());
@@ -398,15 +387,6 @@ const setCardRef = (el, id) => {
     if (cardObserver) cardObserver.observe(el);
   } else {
     cardRefs.delete(id);
-  }
-};
-
-const setAudioRef = (el, id) => {
-  if (el) {
-    applyVolumeToAudio(el);
-    audioById.set(id, el);
-  } else {
-    audioById.delete(id);
   }
 };
 
@@ -588,112 +568,106 @@ const confirmBuy = async () => {
   }
 };
 
-const pauseProduct = (id) => {
-  const audio = audioById.get(id);
-  if (!audio) return;
-
-  audio.pause();
-};
-
 const togglePreview = async (product) => {
-  currentProductId.value = product.id;
-  emitPlayerState();
-
-  const audio = audioById.get(product.id);
-  if (!audio) return;
-  applyVolumeToAudio(audio);
+  if (!audioRef.value) return;
+  applyVolumeToAudio(audioRef.value);
 
   if (activeProduct.value === product.id) {
-    audio.pause();
+    audioRef.value.pause();
     activeProduct.value = null;
+    currentProductId.value = '';
     isCurrentAudioPlaying.value = false;
     emitPlayerState();
     return;
   }
 
   if (activeProduct.value) {
-    pauseProduct(activeProduct.value);
+    audioRef.value.pause();
   }
 
+  audioRef.value.src = product.audio;
+  currentProductId.value = product.id;
   activeProduct.value = product.id;
 
   try {
-    await audio.play();
+    await audioRef.value.play();
     isCurrentAudioPlaying.value = true;
     emitPlayerState();
   } catch (error) {
     activeProduct.value = null;
+    currentProductId.value = '';
     isCurrentAudioPlaying.value = false;
     emitPlayerState();
   }
 };
 
 const stopPreview = () => {
-  if (!currentProductId.value) return;
+  if (!audioRef.value) return;
 
-  const audio = audioById.get(currentProductId.value);
-  if (audio) {
-    audio.pause();
-    audio.currentTime = 0;
-  }
+  audioRef.value.pause();
+  audioRef.value.currentTime = 0;
 
-  progressById[currentProductId.value] = 0;
+  const id = activeProduct.value;
+  if (id) progressById[id] = 0;
   currentTime.value = 0;
   activeProduct.value = null;
+  currentProductId.value = '';
   isCurrentAudioPlaying.value = false;
   emitPlayerState();
 };
 
-const handleAudioEnded = (id) => {
-  if (activeProduct.value === id) {
+const handleAudioEnded = () => {
+  const id = activeProduct.value;
+  if (id) {
     activeProduct.value = null;
-  }
-  if (currentProductId.value === id) {
+    currentProductId.value = '';
     isCurrentAudioPlaying.value = false;
     currentTime.value = 0;
+    progressById[id] = 0;
+    emitPlayerState();
   }
-  progressById[id] = 0;
-  emitPlayerState();
 };
 
-const handleAudioLoaded = (id) => {
-  const audio = audioById.get(id);
-  if (!audio || !Number.isFinite(audio.duration)) return;
-
-  durationById[id] = audio.duration;
-  emitPlayerState();
+const handleAudioLoaded = () => {
+  if (!audioRef.value || !Number.isFinite(audioRef.value.duration)) return;
+  const id = activeProduct.value;
+  if (id) {
+    durationById[id] = audioRef.value.duration;
+    emitPlayerState();
+  }
 };
 
-const updateProgress = (id) => {
-  const audio = audioById.get(id);
-  if (!audio || !audio.duration) return;
+const updateProgress = () => {
+  if (!audioRef.value || !audioRef.value.duration) return;
 
-  durationById[id] = audio.duration;
-  progressById[id] = Math.min(100, (audio.currentTime / audio.duration) * 100);
+  const id = activeProduct.value;
+  if (id) {
+    durationById[id] = audioRef.value.duration;
+    progressById[id] = Math.min(100, (audioRef.value.currentTime / audioRef.value.duration) * 100);
+  }
   if (currentProductId.value === id) {
-    currentTime.value = audio.currentTime;
-    isCurrentAudioPlaying.value = !audio.paused;
+    currentTime.value = audioRef.value.currentTime;
+    isCurrentAudioPlaying.value = !audioRef.value.paused;
     emitPlayerState();
   }
 };
 
 const seekCurrent = (progress) => {
-  const audio = audioById.get(currentProductId.value);
+  if (!audioRef.value || !audioRef.value.duration) return;
   const nextProgress = Number(progress);
+  if (!Number.isFinite(nextProgress)) return;
 
-  if (!audio || !audio.duration || !Number.isFinite(nextProgress)) return;
-
-  audio.currentTime = Math.min(100, Math.max(0, nextProgress)) / 100 * audio.duration;
-  currentTime.value = audio.currentTime;
-  progressById[currentProductId.value] = Math.min(100, Math.max(0, nextProgress));
+  audioRef.value.currentTime = Math.min(100, Math.max(0, nextProgress)) / 100 * audioRef.value.duration;
+  currentTime.value = audioRef.value.currentTime;
+  if (currentProductId.value) {
+    progressById[currentProductId.value] = Math.min(100, Math.max(0, nextProgress));
+  }
   emitPlayerState();
 };
 
 const setVolume = (value) => {
   playerVolume.value = Math.min(1, Math.max(0, Number(value)));
-  audioById.forEach((audio) => {
-    applyVolumeToAudio(audio);
-  });
+  if (audioRef.value) applyVolumeToAudio(audioRef.value);
   emitPlayerState();
 };
 
